@@ -32,15 +32,15 @@ public class Config
     for( IModelObject stateElement: element.getChildren())
     {
       int index = count++;
-      map.put( stateElement.getID(), index);
-      names.add( stateElement.getID());
+      map.put( Xlate.get( stateElement, "id", ""), index);
+      names.add( Xlate.get( stateElement, "id", ""));
     }
     
     parser.setNames( names.toArray( new String[ 0]));
     
     for( IModelObject stateElement: element.getChildren())
     {
-      int state = map.get( stateElement.getID());
+      int state = map.get( Xlate.get( stateElement, "id", ""));
       for( IModelObject opElement: stateElement.getChildren())
       {
         String events = Xlate.get( opElement, "event", "");

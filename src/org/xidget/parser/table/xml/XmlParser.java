@@ -7,8 +7,6 @@ import java.util.Stack;
 
 import org.xmodel.IModelObject;
 import org.xmodel.ModelObject;
-import org.xmodel.xml.HtmlIO;
-import org.xmodel.xml.IXmlIO.Style;
 
 /**
  * An XML parser built by embedding the state transition table created by IndexedParser.

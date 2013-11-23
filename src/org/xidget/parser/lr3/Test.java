@@ -43,9 +43,8 @@ public class Test
   public static void main( String[] args) throws Exception
   {
     String cfg = "" +
-  		"A := ( B );" +
-   	  "B := A;" +
-   	  "B := 1;" +
+  		"A := p r i v a t e;" +
+      "A := p u b l i c;" +
    	  "" ;
     
     Test test = new Test();
@@ -55,7 +54,7 @@ public class Test
       public void onProduction( Rule rule, char[] buffer, int start, int length)
       {
         String string = new String( buffer, 0, buffer.length);
-        System.out.printf( "Ç%sÈ\n", rule);
+        System.out.printf( "|%s|\n", rule);
         if ( start >= 0 && length >= 0)
         {
           System.out.printf( "%s\n", string);
@@ -70,7 +69,6 @@ public class Test
     {
       rule.handler = handler;
     }
-    
     
     LR1 lr = new LR1();
     Parser parser = lr.compile( grammar);

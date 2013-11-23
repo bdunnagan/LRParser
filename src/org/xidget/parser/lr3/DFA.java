@@ -1,8 +1,6 @@
 package org.xidget.parser.lr3;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import org.xidget.parser.lr3.State.Shift;
 
@@ -77,7 +75,7 @@ public final class DFA
       //System.out.printf( "[%c] ", buffer[ offset]);
       //printStack();
       
-      if ( shifts == null) return split( parser, state, buffer, offset, length - offset);
+      //if ( shifts == null) return split( parser, state, buffer, offset, length - offset);
       
       searches++;
       Shift shift = shifts[ 0];
@@ -156,16 +154,16 @@ public final class DFA
    * @param length The length of the buffer.
    * @return Returns the 
    */
-  private DFA split( Parser parser, State state, char[] buffer, int start, int length)
-  {
-    List<DFA> paths = new ArrayList<DFA>( state.splits.length);
-    for( int i=1; i<paths.size(); i++) paths.add( new DFA( this, state.splits[ i]));
-    
-    paths.add( 0, this);
-    sstack[ sindex] = state.splits[ 0];
-
-    return parser.tryParse( paths, buffer, start, length);
-  }
+//  private DFA split( Parser parser, State state, char[] buffer, int start, int length)
+//  {
+//    List<DFA> paths = new ArrayList<DFA>( state.splits.length);
+//    for( int i=1; i<paths.size(); i++) paths.add( new DFA( this, state.splits[ i]));
+//    
+//    paths.add( 0, this);
+//    sstack[ sindex] = state.splits[ 0];
+//
+//    return parser.tryParse( paths, buffer, start, length);
+//  }
 
   /**
    * @return Returns the current line number.
