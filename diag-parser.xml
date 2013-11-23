@@ -1,0 +1,50 @@
+<parser>
+  <state id="Init">
+    <jump event="{">Object</jump>
+    <take event="\s"/>
+  </state>
+  
+  <state id="Object">
+    <push event="{">Object</push>
+    <pop event="}"/>
+    <push event="[">Sequence</push>
+    <push event='"'>DQuote</push>
+    <push event='''>SQuote</push>
+    <push event="\S">Word</push>
+    <take event="\s"/>
+  </state>
+  
+  <state id="Word">
+    <pop event="}">2</pop>
+    <pop event="]">2</pop>
+    <pop event="\s"/>
+    <take event="\S"/>
+  </state>
+  
+  <state id="Sequence">
+    <push event="{">Object</push>
+    <pop event="}"/>
+    <push event="[">Sequence</push>
+    <pop event="]"/>
+    <push event='"'>DQuote</push>
+    <push event='''>SQuote</push>
+    <push event="\S">Word</push>
+    <take event="\s"/>
+  </state>
+  
+  <state id="SingleQuote">
+    <pop event="'"/>
+    <push event="\\">Escape</push>
+    <jump event="."/>
+  </state>
+  
+  <state id="DoubleQuote">
+    <pop event='"'/>
+    <push event="\\">Escape</push>
+    <jump event="."/>
+  </state>
+  
+  <state id="Escape">
+    <pop event="."/>
+  </state>  
+</parser>

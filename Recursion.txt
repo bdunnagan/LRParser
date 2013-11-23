@@ -1,0 +1,35 @@
+Recursion Theory
+
+Consider the following structure:
+
+  D := A | B | C
+  A := Rm D Rn
+  B := Rp D Rq
+  C := Rx
+
+Definitions:
+
+  D is a decision point.
+  A and B are recursive rules.
+  C is a non-recursive rule.
+
+Axiom:
+
+  A recursive path in a grammar must always include a decision point that has a non-recursive member.
+
+Consider Rm -> D in Rule A:
+
+  The entry point to D will be (Rm U Rp).
+  The next symbols in the stream will be in (Rm U Rp) or (Rx), where
+   
+    (Rm U Rp) indicates recursion, and
+    (Rx) terminates recursion
+    
+  Rule A should be pushed on the stack for all transitions (Rm U Rp U Rx).
+  
+Consider D -> Rn in Rule A:
+
+  Due to the recursion of (Rm U Rp), (Rx) must be the exit symbol from D.
+ 
+  (Rn U Rq) exit by popping the stack.
+

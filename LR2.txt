@@ -1,0 +1,71 @@
+S -> E
+E -> A | B
+A -> C | D
+B -> 1 2
+C -> 1 3
+D -> 1 4
+
+s0 (1,s1)
+s1 (3,s2) (4,s3) (2,s4)
+s2 (rC,s?)
+s3 (rD,s?)
+s4 (rB,s?)
+
+S -> E
+E -> 1 A 2
+A -> B | C
+B -> 1 2
+C -> 1 3
+
+s0 (1,s1) ($,acc)
+s1 (1,s2)
+s2 (2,s3) (3,s4)
+s3 (rB,s5)
+s4 (rC,s5)
+s5 (rA,s5) (2,s6)
+s6 (rE,s0)
+
+0. keep track of global sequence state
+1. keep track of state that produces each non-terminal
+2. after processing each non-terminal in a sequence, push the non-terminal production state on the stack
+3. no need to update s? in middle of sequence (like E -> A B C)
+
+S -> E
+E -> A B C
+A -> B | 1
+B -> 1 2
+C -> 1 | 2
+
+Stack
+s0
+
+States
+s0 (1,s1) ($,acc) 
+s1 (2,s2) (rA,s?) (1,s3)
+s2 (rB,s?)
+s3 (2,s4)
+s4 (rB,s?) (1,s5) (2,s5)
+s5 (rC,s6)
+s6 (rE,s?) 
+
+S -> E
+E -> A | B
+A -> 1
+B -> E 2
+1
+12
+112
+
+
+s0 
+
+
+States
+s0 (1,s1)
+s1 (rA,s2)
+s2 (rE,s?) 
+ 
+ 
+
+
+ 

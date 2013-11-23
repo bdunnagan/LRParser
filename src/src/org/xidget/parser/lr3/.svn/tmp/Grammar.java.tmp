@@ -1,0 +1,357 @@
+package org.xidget.parser.lr3;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+
+import org.xidget.parser.lr3.lr1.Lookahead;
+
+public class Grammar
+{
+  public final static String epsilon = "¢";
+  public final static String finish = "¿";
+  
+  public Grammar()
+  {
+    this.rules = new ArrayList<Rule>();
+    this.lhsMap = new LinkedHashMap<String, List<Rule>>();
+    this.counter = -100;
+    this.lookahead = new Lookahead( this, 1);
+  }
+
+  /**
+   * Set the start rule.
+   * @param name The name of the rule.
+   */
+  public void setStart( String name)
+  {
+    if ( !lhsMap.containsKey( name)) 
+      throw new IllegalArgumentException( 
+          String.format( "Rule %s not defined.", name));
+    
+    start = lhsMap.get( name).get( 0);
+  }
+  
+  /**
+   * Create and add a new rule with the specified name.
+   * @param name The name.
+   * @return Returns the new rule.
+   */
+  public Rule addRule( String name)
+  {
+    Rule rule = new Rule( name, counter--);
+    addRule( rule);
+    return rule;
+  }
+  
+  /**
+   * Create and add a new rule with the specified name and rhs.
+   * @param name The name.
+   * @param rhs The right-hand side of the rule.
+   * @return Returns the new rule.
+   */
+  public Rule addRule( String name, String... rhs)
+  {
+    Rule rule = new Rule( name, counter--, rhs);
+    addRule( rule);
+    return rule;
+  }
+
+  /**
+   * Add a rule to the grammar.
+   * @param rule The rule.
+   */
+  public void addRule( Rule rule)
+  {
+    if ( start == null) start = rule;
+    rules.add( rule);
+    
+    List<Rule> lhs = lhsMap.get( rule.name());
+    if ( lhs == null) 
+    {
+      lhs = new ArrayList<Rule>();
+      lhsMap.put( rule.name(), lhs);
+    }
+    
+    lhs.add( rule);
+  }
+  
+  /**
+   * Create grammar rules for zero or more instances of the specified rule. The grammar
+   * is accessed by suffixing "*" to the name of the rule.
+   * @param name The name of the base rule.
+   */
+  public void addZeroPlusRules( String name)
+  {
+    String nameStar = name + "*";
+    
+    addRule( nameStar);
+    
+    Rule loopRule = addRule( nameStar);
+    loopRule.add( nameStar);
+    loopRule.add( name);
+  }
+  
+  /**
+   * Create grammar rules for zero or more instances of the specified rule. The grammar
+   * is accessed by suffixing "+" to the name of the rule.
+   * @param name The name of the base rule.
+   */
+  public void addOnePlusRules( String name)
+  {
+    String nameStar = name + "+";
+    
+    Rule stopRule = addRule( nameStar);
+    stopRule.add( name);
+    
+    Rule loopRule = addRule( nameStar);
+    loopRule.add( nameStar);
+    loopRule.add( name);
+  }
+  
+  /**
+   * Augment the grammar with the start rule.
+   */
+  public void augment()
+  {
+    if ( augmented) return;
+    augmented = true;
+    
+    Rule newStart = new Rule( "È", Integer.MAX_VALUE);
+    newStart.add( start.name());
+    rules.add( 0, newStart);
+    start = newStart;
+    
+    lhsMap.put( newStart.name(), Collections.<Rule>singletonList( newStart));
+  }
+  
+  /**
+   * @return Returns the rules in the grammar.
+   */
+  public List<Rule> rules()
+  {
+    return rules;
+  }
+  
+  /**
+   * Returns the declarations with the specified left-hand-side name.
+   * @param name The left-hand-side name.
+   * @return Returns the declarations with the specified left-hand-side name.
+   */
+  public List<Rule> lhs( String name)
+  {
+    List<Rule> lhs = lhsMap.get( name);
+    if ( lhs != null) return lhs;
+    return Collections.emptyList();
+  }
+  
+  /**
+   * Returns true if the specified rule is an empty production.
+   * @param rule The rule.
+   * @return Returns true if the specified rule is an empty production.
+   */
+  public boolean isEmpty( Rule rule)
+  {
+    return rule.rhs().size() == 0;
+  }
+  
+  /**
+   * Returns true if the specified symbol is a terminal.
+   * @param name The symbol.
+   * @return Returns true if the specified symbol is a terminal.
+   */
+  public boolean isTerminal( String name)
+  {
+    return lhsMap.get( name) == null;
+  }
+
+  /**
+   * Compute the first-k lookahead in the specified string.
+   * @param symbols A string of terminal and/or non-terminal symbols.
+   * @return Returns the result.
+   */
+  public List<String> first( Collection<String> symbols)
+  {
+<<<<<<< .mine
+    return lookahead.first( symbols);
+=======
+    return first( symbols, new HashSet<Rule>());
+  }
+  
+  /**
+   * Computes the First(...) function on the specified sequence of symbols.
+   * @param list The list of symbols.
+   * @param visited The set of visited rules.
+   * @return Returns the First() set.
+   */
+  private Set<String> first( Collection<String> symbols, Set<Rule> visited)
+  {
+    Set<String> first = new HashSet<String>();
+    for( String symbol: symbols)
+    {
+      Set<String> set = first( symbol, visited);
+      first.addAll( set);
+      if ( set.size() > 0 && !set.equals( Collections.singleton( ""))) 
+      {
+        return first;
+      }
+    }
+    return first;
+>>>>>>> .r71
+  }
+  
+  /**
+   * Compute the epsilon-free first-k lookahead in the specified string.
+   * @param symbols A string of terminal and/or non-terminal symbols.
+   * @return Returns the result.
+   */
+  public List<String> eff( Collection<String> symbols)
+  {
+<<<<<<< .mine
+    return lookahead.eff( symbols);
+=======
+    return first( symbol, new HashSet<Rule>());
+  }
+  
+  /**
+   * Computes the First(...) function on the specified symbol.
+   * @param symbol The symbol.
+   * @param visited The set of visited rules.
+   * @return Returns the first set of symbols (possibly empty).
+   */
+  private Set<String> first( String symbol, Set<Rule> visited)
+  {
+    if ( symbol.length() == 0) return Collections.emptySet();
+    
+    List<Rule> rules = lhs( symbol);
+    if ( rules == null || rules.size() == 0)
+      return Collections.singleton( symbol);
+
+    Set<String> first = new LinkedHashSet<String>();
+    for( Rule rule: rules)
+    {
+      if ( visited.contains( rule)) continue;
+      visited.add( rule);
+      
+      List<String> rhs = rule.rhs();
+      if ( rhs.size() == 0)
+      {
+        first.add( "");
+      }
+      else
+      {
+        Set<String> set = first( rhs, visited);
+        first.addAll( set);
+      }
+    }
+    return first;
+>>>>>>> .r71
+  }
+  
+  /**
+   * Returns the productions for the specified non-terminal symbol.
+   * @param symbol The symbol.
+   * @return Returns the productions for the specified non-terminal symbol.
+   */
+  public List<int[]> toProduction( String symbol)
+  {
+    List<int[]> result = new ArrayList<int[]>();
+    
+    List<Rule> rules = lhs( symbol);
+    int loProd = rules.get( 0).symbol();
+    int hiProd = loProd;
+
+    for( int i=1; i<rules.size(); i++)
+    {
+      int prod = rules.get( i).symbol();
+      if ( prod == (loProd - 1)) 
+      {
+        loProd = prod;
+      }
+      else
+      {
+        result.add( ((loProd == hiProd)? new int[] { loProd}: new int[] { loProd, hiProd}));
+        loProd = hiProd = prod;
+      }
+    }
+ 
+    result.add( ((loProd == hiProd)? new int[] { loProd}: new int[] { loProd, hiProd}));
+    return result;
+  }
+  
+  /**
+   * Convert the specified symbol string into a terminal range. All terminal symbols may represent either
+   * a single terminal or a range of terminals using the syntax [a,b]. Hexadecimal character values may be 
+   * preceded by 0x. The following characters must be represented in hexadecimal if they are to appear in 
+   * a range: comma, left bracket, right bracket and space.
+   * @param symbol The symbol to be converted.
+   * @return Returns the terminal range.
+   */
+  public int[] toTerminal( String symbol)
+  {
+    if ( symbol == null || symbol.equals( Grammar.epsilon) || symbol.equals( Grammar.finish)) return new int[] { 0};
+    
+    if ( symbol.charAt( 0) == '[')
+    {
+      if ( symbol.length() < 2) 
+      {
+        String message = String.format( "Incomplete symbol range specification, %s.", symbol);
+        throw new BuildException( message);
+      }
+      
+      String trimmed = symbol.substring( 1, symbol.length() - 1);
+      String[] parts = trimmed.split( "\\s*[,-]\\s*");
+      parts[ 0] = parts[ 0].trim();
+      parts[ 1] = parts[ 1].trim();
+      try
+      {
+        int[] range = new int[ 2];
+        for( int i=0; i<2; i++)
+        {
+          if ( parts[ i].startsWith( "#"))
+          {
+            range[ i] = Integer.parseInt( parts[ i].substring( 2), 16);
+          }
+          else
+          {
+            if ( parts[ i].length() > 1)
+            {
+              String message = String.format( "Too many characters in symbol range specification, %s.", symbol);
+              throw new BuildException( message);
+            }
+            
+            range[ i] = parts[ i].charAt( 0); 
+          }
+        }
+        return range;
+      }
+      catch( Exception e)
+      {
+        String message = String.format( "Invalid symbol range specification, %s.", symbol);
+        throw new BuildException( message);
+      }
+    }
+    else
+    {
+      if ( symbol.length() > 1)
+      {
+        String message = String.format( "Too many characters in symbol range specification, %s.", symbol);
+        throw new BuildException( message);
+      }
+      
+      int[] terminal = new int[ 1];
+      terminal[ 0] = symbol.charAt( 0);
+      return terminal;
+    }
+  }
+  
+  private Rule start;
+  private List<Rule> rules;
+  private LinkedHashMap<String, List<Rule>> lhsMap;
+  private Lookahead lookahead;
+  private boolean augmented;
+  private int counter;
+}

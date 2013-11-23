@@ -1,0 +1,6 @@
+<parser>
+  <state id="Root">
+    <push event="[_:-]|\w|\d">LessThan</push>
+    <take event="\s"/>
+  </state>
+</parser>

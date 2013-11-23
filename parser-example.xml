@@ -1,0 +1,25 @@
+<parser>
+  <rule name="AdditiveExpr">
+    <rule>rule[ @name='MultiplicativeExpr']</rule> OR <rule name="MultiplicativeExpr"/>
+    <zeroPlus>
+      <oneOf>
+        <token>'+'</token>
+        <token>'-'</token>
+      </oneOf>
+      <rule name="MultiplicativeExpr"/>
+    </zeroPlus>
+  </rule>
+  
+  <rule name="MultiplicativeExpr">
+    <rule name="UnionExpr"/>
+    <zeroPlus>
+      <oneOf>
+        <token>'*'</token>
+        <token>'div'</token>
+        <token>'idiv'</token>
+        <token>'mod'</token>
+      </oneOf>
+      <rule name="UnionExpr"/>
+    </zeroPlus>
+  </rule>
+</parser>

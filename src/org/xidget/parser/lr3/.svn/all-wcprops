@@ -1,0 +1,77 @@
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/Parsing/!svn/ver/99/trunk/Parser/src/org/xidget/parser/lr3
+END
+Test.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/Parsing/!svn/ver/87/trunk/Parser/src/org/xidget/parser/lr3/Test.java
+END
+State.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/Parsing/!svn/ver/93/trunk/Parser/src/org/xidget/parser/lr3/State.java
+END
+Graph.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/Parsing/!svn/ver/100/trunk/Parser/src/org/xidget/parser/lr3/Graph.java
+END
+SymbolSpecification.txt
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/Parsing/!svn/ver/91/trunk/Parser/src/org/xidget/parser/lr3/SymbolSpecification.txt
+END
+Grammar.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/Parsing/!svn/ver/103/trunk/Parser/src/org/xidget/parser/lr3/Grammar.java
+END
+Rule.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/Parsing/!svn/ver/103/trunk/Parser/src/org/xidget/parser/lr3/Rule.java
+END
+Lookahead.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/Parsing/!svn/ver/101/trunk/Parser/src/org/xidget/parser/lr3/Lookahead.java
+END
+DFA.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/Parsing/!svn/ver/103/trunk/Parser/src/org/xidget/parser/lr3/DFA.java
+END
+XPathGrammar.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/Parsing/!svn/ver/94/trunk/Parser/src/org/xidget/parser/lr3/XPathGrammar.java
+END
+Parser.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/Parsing/!svn/ver/102/trunk/Parser/src/org/xidget/parser/lr3/Parser.java
+END
+BNFGrammar.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/Parsing/!svn/ver/103/trunk/Parser/src/org/xidget/parser/lr3/BNFGrammar.java
+END
+BuildException.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/Parsing/!svn/ver/53/trunk/Parser/src/org/xidget/parser/lr3/BuildException.java
+END

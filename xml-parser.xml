@@ -1,0 +1,95 @@
+<parser>
+  <state id="Document">
+    <push event="&lt;">LessThan</push>
+    <take event="\s"/>
+  </state>
+  
+  <state id="LessThan">
+    <jump event="[_:]|\w|\d">ElementName</jump>
+    <jump event="[?]">PI</jump>
+    <jump event="!">DTD</jump>
+    <jump event="/">EndTag</jump>
+    <take event="\s"/>
+  </state>
+  
+  <state id="ElementName">
+    <take event="[_:-]|\w|\d"/>
+    <jump event="&gt;">ElementBody</jump>
+    <jump event="[/]">StartEndTag</jump>
+    <jump event="\s">Element</jump>
+  </state>
+  
+  <state id="EndTag">
+    <pop event="&gt;">2</pop>
+    <jump event="."/>
+  </state>
+  
+  <state id="AttributeName">
+    <jump event="=">AttributeValue</jump>
+    <take event="[_:-]|\w|\d"/>
+    <take event="\s"/>
+  </state>
+  
+  <state id="AttributeValue">
+    <jump event="'">SingleQuote</jump>
+    <jump event='"'>DoubleQuote</jump>
+    <push event="&amp;">Entity</push>
+    <jump event="[/]">StartEndTag</jump>
+    <take event="\s"/>
+  </state>
+  
+  <state id="DTD">
+    <pop event="&gt;"/>
+    <take event="[^&gt;]"/>
+  </state>
+  
+  <state id="Element">
+    <push event="[_:]|\w|\d">AttributeName</push>
+    <jump event="&gt;">ElementBody</jump>
+    <jump event="[/]">StartEndTag</jump>
+    <take event="\s"/>
+  </state>
+  
+  <state id="ElementBody">
+    <push event="&lt;">LessThan</push>
+    <push event="&amp;">Entity</push>
+    <take event="."/>
+    <take event="\s"/>
+  </state>
+  
+  <state id="Entity">
+    <take event="\w"/>
+    <pop event=";"/>
+  </state>
+  
+  <state id="PI">
+    <jump event="[?]">PIEnd</jump>
+    <take event="."/>
+  </state>
+  
+  <state id="PIEnd">
+    <pop event="&gt;"/>
+    <take event="\s"/>
+  </state>
+  
+  <state id="SingleQuote">
+    <pop event="'"/>
+    <push event="\\">Escape</push>
+    <jump event="."/>
+  </state>
+  
+  <state id="StartEndTag">
+    <pop event="&gt;"/>
+    <take event="\s"/>
+  </state>
+  
+  <state id="DoubleQuote">
+    <pop event='"'/>
+    <push event="\\">Escape</push>
+    <jump event="."/>
+  </state>
+  
+  <state id="Escape">
+    <pop event="."/>
+  </state>
+</parser>

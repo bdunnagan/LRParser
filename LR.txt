@@ -1,0 +1,94 @@
+Cases
+
+S -> E
+E -> 1
+
+s0 1,s1 $,acc
+s1 rE
+
+S -> E
+E -> 1 | 2
+
+s0 1,s1 2,s1 $,acc
+s1 rE
+
+S -> E
+E -> A
+A -> 1
+
+s0 1,s1
+s1 rA,s2
+s2 rE,s0
+
+S -> E
+E -> A | B
+A -> 1 2
+B -> 1 3
+
+s0 1,s1
+s1 2,s2 3,s4 <-- E lookahead state (automatically produced because A has a second token)
+s2 rA,s3 <-- A production state
+s3 rE,s0 <-- E production state
+s4 rB,s3 <-- B production state
+
+
+S -> E
+E -> A | B
+A -> 1
+B -> 1 2
+
+s0 (1,s1)
+s1 (rA,s2) 
+s2 (rE,s0)
+
+Steps:
+
+. Iterate (E -> .A | B)
+
+. Iterate (A -> .1)
+. (OP-SEQ: sequence)
+  - (1,s) does not exist in sC (s0)
+    - create s1
+    - add (1,s1) to sC (s0)
+    - sC = s1
+  
+. Iterate (A -> 1.)
+. (OP-EOS: end of sequence)
+  - if terminal
+    - add (rA) to sC (s1)
+  
+. Iterate (E -> A. | B)
+. (OP-EOS)
+  - if non-terminal
+    - set ( 
+    
+. (OP-DP: decision point, reset sequence)
+  - add (rE,sT) to sC (s2)
+  - sC = top of stack (s0)
+
+. Iterate (E -> A | .B)
+
+. Iterate (B -> .1 2)
+. (OP-SEQ)
+  - (1,s) exists in sC (s0)
+    - sC = s1 (what 1 points to in s0)
+
+. Iterate (B -> 1 .2)
+. (OP-SEQ)
+  - (2,s) does not exist in sC (s1)
+    - create s3
+    - add (2,s3) to sC (s1)
+    - sC = s3
+    
+. Iterate (B -> 1 2.)
+. (OP-SEQ)
+  - create s4
+  - add (rB,s4) to sC (s3)
+  - sC = s4
+  
+. Iterate (E -> A | B.)
+. (OP-DP)
+  - add (rE,sT) to sC (s4)
+  
+  
+  
