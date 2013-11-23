@@ -10,13 +10,13 @@ import org.xidget.parser.lr3.Rule.IHandler;
 
 public class Grammar
 {
-  public final static String epsilon = "\001";
+  public final static String epsilon = "@";
   public final static char epsilonChar = epsilon.charAt( 0);
   
-  public final static String terminus = "\002";
+  public final static String terminus = "$";
   public final static char terminusChar = terminus.charAt( 0);
   
-  public final static String augment = "\003";
+  public final static String augment = "!";
   public final static char augmentChar = augment.charAt( 0);
   
   public Grammar()

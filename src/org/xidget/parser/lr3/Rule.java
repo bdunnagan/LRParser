@@ -68,7 +68,7 @@ public final class Rule
    * Expand multi-character terminals.
    * @param grammar The grammar.
    */
-  public final void expandTokens( Grammar grammar)
+  final void expandTokens( Grammar grammar)
   {
     List<String> expanded = new ArrayList<String>();
     for( String symbol: rhs)
