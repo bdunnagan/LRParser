@@ -1,7 +1,6 @@
 package org.xidget.parser.lr3;
 
 import java.util.Arrays;
-
 import org.xidget.parser.lr3.State.Shift;
 
 /**
@@ -63,6 +62,21 @@ public final class DFA
    */
   public int parse( Parser parser, char[] buffer, int start, int length)
   {
+    while( branchDFA != null)
+    {
+      int result = branchDFA.parse( parser, buffer, start, length);
+      if ( result == -2) return -2;
+      if ( result == -1)
+      {
+        if ( ++branchIndex == branches.length) return -1;
+        branchDFA = new DFA( this, branches[ branchIndex]);
+      }
+      else
+      {
+        return result;
+      }
+    }
+    
     int consumed = 0;
     int last = start + length;
     for( int offset = start; offset < last; loops++)
@@ -72,10 +86,29 @@ public final class DFA
       State state = sstack[ sindex];
       Shift[] shifts = state.shifts;
       
-      //System.out.printf( "[%c] ", buffer[ offset]);
-      //printStack();
+      System.out.printf( "[%c] ", buffer[ offset]);
+      printStack();
       
-      //if ( shifts == null) return split( parser, state, buffer, offset, length - offset);
+      if ( shifts == null) 
+      {
+        branches = state.splits;
+        branchIndex = 0;
+        branchDFA = new DFA( this, branches[ branchIndex]);
+        while( branchDFA != null)
+        {
+          int result = branchDFA.parse( parser, buffer, offset, last - offset);
+          if ( result == -2) return -2;
+          if ( result == -1)
+          {
+            if ( ++branchIndex == branches.length) return -1;
+            branchDFA = new DFA( this, branches[ branchIndex]);
+          }
+          else
+          {
+            return result;
+          }
+        }
+      }
       
       searches++;
       Shift shift = shifts[ 0];
@@ -144,27 +177,7 @@ public final class DFA
     
     return consumed;
   }
-
-  /**
-   * Handle a splitting state.
-   * @param parser The parser.
-   * @param state The splitting state.
-   * @param buffer The buffer.
-   * @param start The current offset into the buffer.
-   * @param length The length of the buffer.
-   * @return Returns the 
-   */
-//  private DFA split( Parser parser, State state, char[] buffer, int start, int length)
-//  {
-//    List<DFA> paths = new ArrayList<DFA>( state.splits.length);
-//    for( int i=1; i<paths.size(); i++) paths.add( new DFA( this, state.splits[ i]));
-//    
-//    paths.add( 0, this);
-//    sstack[ sindex] = state.splits[ 0];
-//
-//    return parser.tryParse( paths, buffer, start, length);
-//  }
-
+  
   /**
    * @return Returns the current line number.
    */
@@ -184,7 +197,6 @@ public final class DFA
   /**
    * Print the current stack.
    */
-  @SuppressWarnings("unused")
   private final void printStack()
   {
     System.out.printf( "%s ", this);
@@ -214,4 +226,7 @@ public final class DFA
   private int sindex;
   private int line;
   private int column;
+  private State[] branches;
+  private int branchIndex;
+  private DFA branchDFA;
 }

@@ -42,10 +42,10 @@ public class Test
   
   public static void main( String[] args) throws Exception
   {
-    String cfg = "" +
-  		"A := p r i v a t e;" +
-      "A := p u b l i c;" +
-   	  "" ;
+    String cfg =
+  		"A := A + A;" +
+  		"A := A - A;" +
+  		"A := 1;";
     
     Test test = new Test();
     Grammar grammar = test.parse( cfg);
@@ -66,12 +66,12 @@ public class Test
     };
     
     for( Rule rule: grammar.rules())
-    {
       rule.handler = handler;
-    }
     
     LR1 lr = new LR1();
     Parser parser = lr.compile( grammar);
+    
+    System.out.println( grammar);
     
     BufferedReader reader = new BufferedReader( new InputStreamReader( System.in));
     while( true)

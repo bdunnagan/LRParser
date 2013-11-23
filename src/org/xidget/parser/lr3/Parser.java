@@ -2,11 +2,7 @@ package org.xidget.parser.lr3;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
 import org.xidget.parser.lr3.lr1.LR1;
 
 public class Parser
@@ -70,42 +66,7 @@ public class Parser
       }
     }
   }
-  
-  /**
-   * Try to parse each character in the buffer with each of the specified paths. 
-   * Remove paths which produce an error.
-   * @param paths The paths.
-   * @param buffer The buffer.
-   * @param start The starting offset in the buffer.
-   * @param length The length of the buffer.
-   * @return Returns the DFA instances that parsed successfully.
-   */
-  protected List<DFA> tryParse( List<DFA> paths, char[] buffer, int start, int length)
-  {
-    List<DFA> completed = null;
-    
-    int last = start + length;
-    for( ; start < last; start++)
-    {
-      for( int i=0; i<paths.size(); i++)
-      {
-        DFA path = paths.get( i);
-        int result = path.parse( this, buffer, start, 1);
-        if ( result < 0)
-        {
-          paths.remove( i--);
-          if ( result == -2) 
-          {
-            if ( completed == null) completed = new ArrayList<DFA>( 1);
-            completed.add( path);
-          }
-        }
-      }
-    }
-    
-    return (completed != null)? completed: Collections.<DFA>emptyList();
-  }
-  
+
   /**
    * Called when a DFA errors.
    * @param dfa The DFA that errored.

@@ -274,6 +274,21 @@ public class Grammar
     }
   }
   
+  /* (non-Javadoc)
+   * @see java.lang.Object#toString()
+   */
+  @Override
+  public String toString()
+  {
+    StringBuilder sb = new StringBuilder();
+    for( Rule rule: rules)
+    {
+      sb.append( rule);
+      sb.append( '\n');
+    }
+    return sb.toString();
+  }
+
   private Rule start;
   private List<Rule> rules;
   private LinkedHashMap<String, List<Rule>> map;
