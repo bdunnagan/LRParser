@@ -10,12 +10,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import org.xidget.parser.lr3.Grammar;
 import org.xidget.parser.lr3.Parser;
 import org.xidget.parser.lr3.Rule;
 import org.xidget.parser.lr3.State;
-import org.xidget.parser.lr3.State.Shift;
+import org.xidget.parser.lr3.State.StackOp;
+import org.xmodel.log.Log;
 
 /**
  * An LR1 table generator.
@@ -25,7 +25,6 @@ public class LR1
   public LR1()
   {
     counter = 0;
-    debug = (System.getProperty( "debug") != null);
   }
   
   /**
@@ -43,7 +42,7 @@ public class LR1
     State start = createStates( grammar, itemSets);
     grammar.freeGraph();
 
-    System.out.printf( "\nFound %d conflicts.\n", conflicts);
+    log.infof( "\nFound %d conflicts.\n", conflicts);
     
     return new Parser( this, start);
   }
@@ -125,6 +124,7 @@ public class LR1
     
     for( LR1ItemSet itemSet: itemSets) 
     {
+      log.infof( "\n%s", itemSet);
       itemSet.state = new State();
       itemSet.state.index = counter++;
       itemSetMap.put( itemSet.state, itemSet);
@@ -142,13 +142,12 @@ public class LR1
       {
         if ( item.complete())
         {
-          if ( item.rule == grammar.rules().get( 0)) 
+          if ( item.rule == grammar.rules().get( 0))
           {
             if ( item.laList.contains( Grammar.terminus))
             {
               int[] terminal = new int[] { Grammar.terminusChar};
-              Action action = new Action( Action.Type.accept, terminal, item);
-              tshifts.add( action);
+              tshifts.add( new Action( Action.Type.accept, terminal, item));
             }
           }
           else
@@ -177,8 +176,7 @@ public class LR1
                 if ( ts.add( symbol))
                 {
                   int[] terminal = grammar.toTerminal( symbol);
-                  Action action = new Action( Action.Type.tshift, terminal, successor);
-                  tshifts.add( action);
+                  tshifts.add( new Action( Action.Type.tshift, terminal, successor));
                 }
               }
             }
@@ -205,7 +203,7 @@ public class LR1
     
     return itemSets.iterator().next().state;
   }
-  
+
   /**
    * Populate the action table of the specified state.
    * @param state The state.
@@ -220,10 +218,10 @@ public class LR1
     
     state.gotos = new State[ grammar.rules().size()];
     
-    if ( debug)
+    if ( log.debug())
     {
-      System.out.printf( "\nState: %d -----------------------\n", state.index);
-      System.out.println( itemSet( state));
+      log.debugf( "\nState: %d -----------------------\n", state.index);
+      log.debug( itemSet( state));
     }
     
     for( int i=0; i<tshifts.size(); i++)
@@ -233,13 +231,13 @@ public class LR1
       
       switch( action.type)
       {
-        case tshift: state.shifts[ i].next = action.itemSet.state; break;
-        case reduce: state.shifts[ i].reduce = action.item.rule; break;
-        case accept: state.shifts[ i].next = null; break;
+        case tshift: state.stackOps[ i].next = action.itemSet.state; break;
+        case reduce: state.stackOps[ i].reduce = action.item.rule; break;
+        case accept: state.stackOps[ i].next = null; break;
       }
       
-      state.shifts[ i].next = (action.itemSet != null)? action.itemSet.state: null;
-      if ( debug) System.out.printf( "    %s\n", action);
+      state.stackOps[ i].next = (action.itemSet != null)? action.itemSet.state: null;
+      log.debugf( "    %s\n", action);
     }
     
     for( int i=0; i<ntshifts.size(); i++)
@@ -248,7 +246,7 @@ public class LR1
       if ( action.omit) continue;
       
       state.gotos[ action.symbols[ 0]] = action.itemSet.state;
-      if ( debug) System.out.printf( "    %s\n", action);
+      log.debugf( "    %s\n", action);
     }
     
     resolveConflicts( grammar, state, tshifts, ntshifts);
@@ -272,7 +270,7 @@ public class LR1
     
     State currSplit = null;
     State prevSplit = null;
-    for( int i=1; i<tshifts.size(); i++)
+    for( int i=1, k=1; i<tshifts.size(); i++, k++)
     {
       prevSplit = currSplit;
       currSplit = null;
@@ -282,33 +280,37 @@ public class LR1
       
       if ( isOverlapping( prev.symbols, curr.symbols))
       {
-        if ( (curr.type == Action.Type.tshift && prev.type == Action.Type.reduce) || (curr.type == Action.Type.reduce && prev.type == Action.Type.tshift))
+        boolean conflict =
+          (curr.type == Action.Type.tshift && prev.type == Action.Type.reduce) || 
+          (curr.type == Action.Type.reduce && prev.type == Action.Type.tshift) ||
+          (curr.type == Action.Type.reduce && prev.type == Action.Type.reduce) ||
+          (curr.type == Action.Type.tshift && prev.type == Action.Type.tshift);
+
+        if ( conflict)
         {
-          System.out.printf( "\nConflict in state %d:\n", state.index);
-          System.out.printf( "    %s\n", prev);
-          System.out.printf( "    %s\n", curr);
-          splitState( state, i, prevSplit, splits);
-          currSplit = splits.get( splits.size() - 1);
-          conflicts++;
-        }
-        
-        else if ( curr.type == Action.Type.reduce && prev.type == Action.Type.reduce)
-        {
-          System.out.printf( "\nConflict in state %d:\n", state.index);
-          System.out.printf( "    %s\n", prev);
-          System.out.printf( "    %s\n", curr);
-          splitState( state, i, prevSplit, splits);
-          currSplit = splits.get( splits.size() - 1);
-          conflicts++;
-        }
-        
-        else if ( curr.type == Action.Type.tshift && prev.type == Action.Type.tshift)
-        {
-          System.out.printf( "\nConflict in state %d:\n", state.index);
-          System.out.printf( "    %s\n", prev);
-          System.out.printf( "    %s\n", curr);
-          splitState( state, i, prevSplit, splits);
-          currSplit = splits.get( splits.size() - 1);
+          log.debugf( "\nConflict in state %d:\n", state.index);
+          log.debugf( "    %s\n", prev);
+          log.debugf( "    %s\n", curr);
+          
+          long prevPriority = prev.getPriority();
+          long currPriority = curr.getPriority();
+          if ( prevPriority < currPriority)
+          {
+            log.debug( "Conflict resolved: second rule(s) have higher priority");
+            deleteStackOp( state, k-1); k--;
+          }
+          else if ( prevPriority > currPriority)
+          {
+            log.debug( "Conflict resolved: first rule(s) have higher priority");
+            deleteStackOp( state, k); k--;
+          }
+          else
+          {
+            log.debug( "Conflict resolved by splitting state");
+            splitState( state, k, prevSplit, splits);
+            currSplit = splits.get( splits.size() - 1);
+          }
+          
           conflicts++;
         }
       }
@@ -341,7 +343,7 @@ public class LR1
         System.out.printf( "Created new state %d to resolve conflict.\n", split.index);
         removeNulls( split);
         
-        for( Shift shift: split.shifts)
+        for( StackOp shift: split.stackOps)
         {
           if ( shift == nullShift)
             throw new IllegalStateException();
@@ -349,24 +351,38 @@ public class LR1
       }
 
       state.splits = splits.toArray( new State[ 0]);
-      state.shifts = null;
+      state.stackOps = null;
       state.gotos = null;
     }
   }
   
+  /**
+   * Delete the stack operation with the specified index from the state.
+   * @param state The state.
+   * @param index The index.
+   */
+  private void deleteStackOp( State state, int index)
+  {
+    StackOp[] oldOps = state.stackOps;
+    StackOp[] newOps = new StackOp[ oldOps.length - 1];
+    System.arraycopy( oldOps, 0, newOps, 0, index);
+    System.arraycopy( oldOps, index+1, newOps, index, newOps.length - index);
+    state.stackOps = newOps;
+  }
+    
   /**
    * Remove null shifts introduced into split state.
    * @param state A split state.
    */
   private void removeNulls( State state)
   {
-    Shift[] shifts = new Shift[ state.shifts.length - 1];
+    StackOp[] shifts = new StackOp[ state.stackOps.length - 1];
     for( int i=0, j=0; j < shifts.length; i++)
     {
-      if ( state.shifts[ i] != nullShift)
-        shifts[ j++] = state.shifts[ i];
+      if ( state.stackOps[ i] != nullShift)
+        shifts[ j++] = state.stackOps[ i];
     }
-    state.shifts = shifts;
+    state.stackOps = shifts;
   }
   
   /**
@@ -399,12 +415,12 @@ public class LR1
     if ( split == null)
     {
       State v1 = copy( state);
-      v1.shifts[ i] = nullShift;
+      v1.stackOps[ i] = nullShift;
       result.add( v1);
     }
     
     State v2 = copy( state);
-    v2.shifts[ i-1] = nullShift;
+    v2.stackOps[ i-1] = nullShift;
     result.add( v2);
   }
   
@@ -417,11 +433,11 @@ public class LR1
    */
   private void createSymbolTable( Grammar grammar, State state, List<Action> tshifts, List<Action> ntshifts)
   {
-    state.shifts = new Shift[ tshifts.size()];
-    for( int i=0; i<state.shifts.length; i++)
+    state.stackOps = new StackOp[ tshifts.size()];
+    for( int i=0; i<state.stackOps.length; i++)
     {
-      Shift shift = new Shift();
-      state.shifts[ i] = shift;
+      StackOp shift = new StackOp();
+      state.stackOps[ i] = shift;
       
       int[] symbol = tshifts.get( i).symbols;
       if ( symbol.length == 2)
@@ -446,7 +462,7 @@ public class LR1
   {
     State copy = new State();
     copy.index = counter++;
-    copy.shifts = Arrays.copyOf( state.shifts, state.shifts.length);
+    copy.stackOps = Arrays.copyOf( state.stackOps, state.stackOps.length);
     copy.gotos = Arrays.copyOf( state.gotos, state.gotos.length);
     itemSetMap.put( copy, itemSetMap.get( state));
     return copy;
@@ -454,18 +470,35 @@ public class LR1
   
   public final static class Action implements Comparable<Action>
   {
-    public Action( Type type, int[] indices, LR1ItemSet itemSet)
+    public Action( Type type, int[] symbols, LR1ItemSet itemSet)
     {
       this.type = type;
-      this.symbols = indices;
+      this.symbols = symbols;
       this.itemSet = itemSet;
     }
     
-    public Action( Type type, int[] indices, LR1Item item)
+    public Action( Type type, int[] symbols, LR1Item item)
     {
       this.type = type;
-      this.symbols = indices;
+      this.symbols = symbols;
       this.item = item;
+    }
+
+    /**
+     * @return Returns the priority of the 
+     */
+    public long getPriority()
+    {
+      if ( item != null) return item.rule.getPriority();
+      
+      long maxPriority = Long.MIN_VALUE;
+      for( LR1Item item: itemSet.items)
+      {
+        if ( item.rule.getPriority() > maxPriority)
+          maxPriority = item.rule.getPriority();
+      }
+      
+      return maxPriority;
     }
     
     /* (non-Javadoc)
@@ -474,34 +507,9 @@ public class LR1
     @Override
     public int compareTo( Action action)
     {
+      // sort by terminal or start of terminal range
       return symbols[ 0] - action.symbols[ 0];
     }
-
-//    /* (non-Javadoc)
-//     * @see java.lang.Object#equals(java.lang.Object)
-//     */
-//    @Override
-//    public boolean equals( Object object)
-//    {
-//      Action action = (Action)object;
-//      if ( symbols.length != action.symbols.length) return false;
-//      if ( action.symbols[ 0] != symbols[ 0]) return false;
-//      if ( symbols.length == 2 && action.symbols[ 1] != symbols[ 1]) return false;
-//      return action.type.equals( type) && action.itemSet == itemSet && action.item == item; 
-//    }
-//
-//    /* (non-Javadoc)
-//     * @see java.lang.Object#hashCode()
-//     */
-//    @Override
-//    public int hashCode()
-//    {
-//      int hash = symbols[ 0];
-//      if ( symbols.length > 1) hash += (symbols[ 1] << 16);
-//      if ( itemSet != null) hash += itemSet.hashCode();
-//      if ( item != null) hash += item.hashCode();
-//      return hash;
-//    }
 
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
@@ -558,11 +566,11 @@ public class LR1
     public boolean omit;
   }
   
-  private final static Shift nullShift = new Shift();
+  private final static StackOp nullShift = new StackOp();
+  public final static Log log = Log.getLog( LR1.class);
   
   private Collection<LR1ItemSet> itemSets;
   private Map<State, LR1ItemSet> itemSetMap;
   private int counter;
   private int conflicts;
-  private boolean debug;
 }

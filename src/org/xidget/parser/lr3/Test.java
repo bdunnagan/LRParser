@@ -4,9 +4,9 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.util.Arrays;
-
 import org.xidget.parser.lr3.Rule.IHandler;
 import org.xidget.parser.lr3.lr1.LR1;
+import org.xmodel.log.Log;
 
 public class Test
 {
@@ -42,9 +42,11 @@ public class Test
   
   public static void main( String[] args) throws Exception
   {
+    LR1.log.setLevel( Log.all);
+    
     String cfg =
   		"A := A + A;" +
-  		"A := A - A;" +
+  		"A := A * A;" +
   		"A := 1;";
     
     Test test = new Test();
@@ -64,6 +66,8 @@ public class Test
         }
       }
     };
+    
+    grammar.rules().get( 2).setPriority( 1);
     
     for( Rule rule: grammar.rules())
       rule.handler = handler;

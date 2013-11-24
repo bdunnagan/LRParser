@@ -16,7 +16,7 @@ public final class State
     return String.format( "S%d", index);
   }
   
-  public final static class Shift
+  public final static class StackOp
   {
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
@@ -24,8 +24,29 @@ public final class State
     @Override
     public String toString()
     {
-      String string = ( low > 32)? String.format( "[%c-%c]", (char)low, (char)high): String.format( "[%02X-%02X]", low, high);
-      return String.format( "%s: shift: %s, reduce: %s\n", string, ((next != null)? next: "none"), ((reduce != null)? reduce: "none"));  
+      StringBuilder sb = new StringBuilder();
+      
+      sb.append( 
+        (low == high)? String.format( "[%c]", (char)low): 
+          ( low > 32)? String.format( "[%c-%c]", (char)low, (char)high): 
+            String.format( "[%02X-%02X]", low, high));
+      
+      sb.append( ": ");
+      
+      if ( next != null)
+      {
+        sb.append( "shift: ");
+        sb.append( next);
+      }
+      
+      if ( reduce != null)
+      {
+        if ( next != null) sb.append( ", ");
+        sb.append( "reduce: ");
+        sb.append( reduce);
+      }
+      
+      return sb.toString();
     }
     
     public int low;
@@ -35,7 +56,7 @@ public final class State
   }
 
   public State[] splits;
-  public Shift[] shifts;
+  public StackOp[] stackOps;
   public State[] gotos;
   public int index;
 }

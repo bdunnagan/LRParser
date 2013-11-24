@@ -31,6 +31,23 @@ public final class Rule
   }
   
   /**
+   * Set the priority of the rule (default: 0).
+   * @param priority The priority.
+   */
+  public void setPriority( long priority)
+  {
+    this.priority = priority;
+  }
+  
+  /**
+   * @return Returns the priority of the rule.
+   */
+  public long getPriority()
+  {
+    return priority;
+  }
+  
+  /**
    * Add a rule to the right-hand side.
    * @param rhs The rule to be added.
    */
@@ -143,4 +160,5 @@ public final class Rule
   
   private String name;
   private List<String> rhs;
+  private long priority;
 }

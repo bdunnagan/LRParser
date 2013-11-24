@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.StringReader;
-
 import org.xidget.parser.lr3.Rule.IHandler;
 import org.xidget.parser.lr3.lr1.LR1;
 

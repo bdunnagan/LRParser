@@ -1,7 +1,7 @@
 package org.xidget.parser.lr3;
 
 import java.util.Arrays;
-import org.xidget.parser.lr3.State.Shift;
+import org.xidget.parser.lr3.State.StackOp;
 
 /**
  * Implementation of a Deterministic Finite Automaton (DFA).
@@ -84,7 +84,7 @@ public final class DFA
       int symbol = buffer[ offset];
       
       State state = sstack[ sindex];
-      Shift[] shifts = state.shifts;
+      StackOp[] shifts = state.stackOps;
       
       System.out.printf( "[%c] ", buffer[ offset]);
       printStack();
@@ -111,7 +111,7 @@ public final class DFA
       }
       
       searches++;
-      Shift shift = shifts[ 0];
+      StackOp shift = shifts[ 0];
       if ( symbol < shift.low || symbol > shift.high)
       {
         boolean found = false;
