@@ -42,7 +42,7 @@ public class LR1
     State start = createStates( grammar, itemSets);
     grammar.freeGraph();
 
-    log.infof( "\nFound %d conflicts.\n", conflicts);
+    log.infof( "\nFound %d conflicts.", conflicts);
     
     return new Parser( this, start);
   }
@@ -218,11 +218,7 @@ public class LR1
     
     state.gotos = new State[ grammar.rules().size()];
     
-    if ( log.debug())
-    {
-      log.debugf( "\nState: %d -----------------------\n", state.index);
-      log.debug( itemSet( state));
-    }
+    log.debugf( "\nState: %d -----------------------\n%s", state.index, itemSet( state));
     
     for( int i=0; i<tshifts.size(); i++)
     {
@@ -237,7 +233,7 @@ public class LR1
       }
       
       state.stackOps[ i].next = (action.itemSet != null)? action.itemSet.state: null;
-      log.debugf( "    %s\n", action);
+      log.debugf( "    %s", action);
     }
     
     for( int i=0; i<ntshifts.size(); i++)
@@ -246,7 +242,7 @@ public class LR1
       if ( action.omit) continue;
       
       state.gotos[ action.symbols[ 0]] = action.itemSet.state;
-      log.debugf( "    %s\n", action);
+      log.debugf( "    %s", action);
     }
     
     resolveConflicts( grammar, state, tshifts, ntshifts);
@@ -288,30 +284,28 @@ public class LR1
 
         if ( conflict)
         {
-          log.debugf( "\nConflict in state %d:\n", state.index);
-          log.debugf( "    %s\n", prev);
-          log.debugf( "    %s\n", curr);
-          
           long prevPriority = prev.getPriority();
           long currPriority = curr.getPriority();
           if ( prevPriority < currPriority)
           {
+            log.debugf( "\nConflict in state %d:\n    %s\n    %s", state.index, prev, curr);
             log.debug( "Conflict resolved: second rule(s) have higher priority");
             deleteStackOp( state, k-1); k--;
           }
           else if ( prevPriority > currPriority)
           {
+            log.debugf( "\nConflict in state %d:\n    %s\n    %s", state.index, prev, curr);
             log.debug( "Conflict resolved: first rule(s) have higher priority");
             deleteStackOp( state, k); k--;
           }
           else
           {
-            log.debug( "Conflict resolved by splitting state");
+            log.warnf( "\nConflict in state %d:\n    %s\n    %s", state.index, prev, curr);
+            log.warn( "Conflict resolved by splitting state");
             splitState( state, k, prevSplit, splits);
             currSplit = splits.get( splits.size() - 1);
+            conflicts++;
           }
-          
-          conflicts++;
         }
       }
     }
@@ -328,9 +322,7 @@ public class LR1
       {
         if ( curr.type == Action.Type.ntshift && prev.type == Action.Type.ntshift && curr.itemSet.equals( prev.itemSet))
         {
-          System.out.printf( "\nConflict in state %d:\n", state.index);
-          System.out.printf( "    %s\n", prev);
-          System.out.printf( "    %s\n", curr);
+          log.warnf( "\nConflict in state %d:\n    %s\n    %s", state.index, prev, curr);
           conflicts++;
         }
       }
@@ -340,7 +332,7 @@ public class LR1
     {
       for( State split: splits) 
       {
-        System.out.printf( "Created new state %d to resolve conflict.\n", split.index);
+        log.debugf( "Created new state %d to resolve conflict.", split.index);
         removeNulls( split);
         
         for( StackOp shift: split.stackOps)

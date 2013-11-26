@@ -6,6 +6,8 @@ import java.io.FileReader;
 import java.io.StringReader;
 import org.xidget.parser.lr3.Rule.IHandler;
 import org.xidget.parser.lr3.lr1.LR1;
+import org.xmodel.log.ConsoleSink;
+import org.xmodel.log.Log;
 
 public class BNFGrammar extends Grammar
 {
@@ -72,10 +74,10 @@ public class BNFGrammar extends Grammar
     addRule( "W+", "W+", "[A-Z]");
     addRule( "W+", "W+", "[0-9]");
     
-    addRule( "S*");
+    addRule( "S*").setPriority( 1);
     addRule( "S*", "S*", "[#01-#20]");
     
-    addRule( "S+", "[#01-#20]");
+    addRule( "S+", "[#01-#20]").setPriority( 2);
     addRule( "S+", "S+", "[#01-#20]");
     
     addRule( "Q", "#22");
@@ -104,6 +106,8 @@ public class BNFGrammar extends Grammar
     
   public static void main( String[] args) throws Exception
   {
+    Log.setDefaultSink( new ConsoleSink());
+    
     BNFGrammar grammar = new BNFGrammar();
     
     LR1 lr = new LR1();
