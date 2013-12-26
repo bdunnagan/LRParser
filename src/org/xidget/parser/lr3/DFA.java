@@ -4,20 +4,18 @@ import java.util.Arrays;
 import org.xidget.parser.lr3.State.StackOp;
 
 /**
- * Implementation of a Deterministic Finite Automaton (DFA).
+ * Implementation of a deterministic finite automaton.
  */
 public final class DFA
 {
   public DFA( State start)
   {
-    this.id = counter++;
     this.start = start;
     reset();
   }
   
   public DFA( DFA dfa, State state)
   {
-    this.id = counter++;
     this.start = state;
     
     sindex = dfa.sindex;
@@ -29,9 +27,6 @@ public final class DFA
     System.arraycopy( dfa.pstack, 0, pstack, 0, sindex);
     
     sstack[ sindex] = state;
-    
-    line = dfa.line;
-    column = dfa.column;
   }
   
   /**
@@ -45,9 +40,6 @@ public final class DFA
     
     sstack[ 0] = start;
     pstack[ 0] = 0;
-    
-    line = 1;
-    column = 0;
   }
   
   /**
@@ -56,15 +48,16 @@ public final class DFA
    * @param buffer The buffer containing the characters.
    * @param start The offset of the first character to parse.
    * @param length The number of characters to parse.
+   * @param removed The number of characters removed from the buffer since the last call.
    * @return Returns the offset into the buffer of the first handle that should be preserved.
    *         If an error occurs then -1 is returned.
    *         If parsing is complete then -2 is returned.
    */
-  public int parse( Parser parser, char[] buffer, int start, int length)
+  public int parse( Parser parser, char[] buffer, int start, int length, int removed)
   {
     while( branchDFA != null)
     {
-      int result = branchDFA.parse( parser, buffer, start, length);
+      int result = branchDFA.parse( parser, buffer, start, length, removed);
       if ( result == -2) return -2;
       if ( result == -1)
       {
@@ -79,24 +72,24 @@ public final class DFA
     
     int consumed = 0;
     int last = start + length;
-    for( int offset = start; offset < last; loops++)
+    for( int offset = start; offset < last; )
     {
       int symbol = buffer[ offset];
       
       State state = sstack[ sindex];
-      StackOp[] shifts = state.stackOps;
+      StackOp[] ops = state.stackOps;
       
-      System.out.printf( "[%c] ", buffer[ offset]);
-      printStack();
+//      System.out.printf( "[%c] ", buffer[ offset]);
+//      printStack();
       
-      if ( shifts == null) 
+      if ( ops == null) 
       {
         branches = state.splits;
         branchIndex = 0;
         branchDFA = new DFA( this, branches[ branchIndex]);
         while( branchDFA != null)
         {
-          int result = branchDFA.parse( parser, buffer, offset, last - offset);
+          int result = branchDFA.parse( parser, buffer, offset, last - offset, removed);
           if ( result == -2) return -2;
           if ( result == -1)
           {
@@ -110,19 +103,17 @@ public final class DFA
         }
       }
       
-      searches++;
-      StackOp shift = shifts[ 0];
-      if ( symbol < shift.low || symbol > shift.high)
+      StackOp op = ops[ 0];
+      if ( symbol < op.low || symbol > op.high)
       {
         boolean found = false;
-        for( int i=1; i<shifts.length; i++)
+        for( int i=1; i<ops.length; i++)
         {
-          searches++;
-          shift = shifts[ i];
-          if ( symbol >= shift.low && symbol <= shift.high)
+          op = ops[ i];
+          if ( symbol >= op.low && symbol <= op.high)
           {
-            shifts[ i] = shifts[ i-1];
-            shifts[ i-1] = shift;
+            ops[ i] = ops[ i-1];
+            ops[ i-1] = op;
             found = true;
             break;
           }
@@ -135,16 +126,15 @@ public final class DFA
         }
       }
       
-      Rule reduce = shift.reduce;
+      Rule reduce = op.reduce;
       if ( reduce != null)
       {
-        reduces++;
-        
         sindex -= reduce.length;
 
         if ( reduce.handler != null)
         {
-          int position = pstack[ sindex];
+          // pstack contains the absolute position
+          int position = pstack[ sindex] - removed;
           reduce.handler.onProduction( reduce, buffer, position, offset - position);
           consumed = offset;
         }
@@ -154,13 +144,6 @@ public final class DFA
       }
       else
       {
-        if ( symbol == '\n') 
-        {
-          line++;
-          column = -1;
-        }
-        
-        column++;
         offset++;
         
         if ( ++sindex == sstack.length)
@@ -169,29 +152,14 @@ public final class DFA
           pstack = Arrays.copyOf( pstack, pstack.length * 2);
         }
 
-        if ( (sstack[ sindex] = shift.next) == null) return -2;
+        if ( (sstack[ sindex] = op.next) == null) return -2;
       }
       
-      pstack[ sindex] = offset;
+      // put absolute position in pstack
+      pstack[ sindex] = offset + removed;
     }
     
     return consumed;
-  }
-  
-  /**
-   * @return Returns the current line number.
-   */
-  public int line()
-  {
-    return line;
-  }
-  
-  /**
-   * @return Returns the current offset in the current line.
-   */
-  public int column()
-  {
-    return column;
   }
   
   /**
@@ -211,21 +179,13 @@ public final class DFA
   @Override
   public String toString()
   {
-    return String.format( "DFA-%d", id);
+    return String.format( "DFA-%X", start.hashCode());
   }
 
-  public static long reduces = 0;
-  public static long searches = 0;
-  public static long loops = 0;
-  public static int counter = 0;
-
-  private int id;
   private State start;
   private State[] sstack;
   private int[] pstack;
   private int sindex;
-  private int line;
-  private int column;
   private State[] branches;
   private int branchIndex;
   private DFA branchDFA;

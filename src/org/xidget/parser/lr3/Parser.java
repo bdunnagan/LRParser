@@ -41,6 +41,7 @@ public class Parser
     
     int preserve = 0;
     int read = 0;
+    int removed = 0;
     
     while( true)
     {
@@ -51,7 +52,7 @@ public class Parser
         read = 1;
       }
 
-      int consumed = dfa.parse( this, buffer, preserve, read);
+      int consumed = dfa.parse( this, buffer, 0, read + preserve, removed);
       if ( consumed == -1) return false;
       if ( consumed == -2) return true;
       
@@ -63,6 +64,7 @@ public class Parser
       else
       {
         System.arraycopy( buffer, consumed, buffer, 0, preserve);
+        removed += consumed;
       }
     }
   }
@@ -76,7 +78,7 @@ public class Parser
    */
   protected void onError( DFA dfa, int index, State[] stack, int sindex)
   {
-    System.out.printf( "%s Parsing error at line %d, column %d: \n", dfa, dfa.line(), dfa.column());
+    System.out.printf( "%s Parsing error at offset %d: \n", dfa, index);
 
 //    int s = index;
 //    for( ; s >= 0 && buffer[ s] != '\n'; s--);

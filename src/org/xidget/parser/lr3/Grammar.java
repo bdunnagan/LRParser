@@ -10,13 +10,13 @@ import org.xidget.parser.lr3.Rule.IHandler;
 
 public class Grammar
 {
-  public final static String epsilon = "@";
+  public final static String epsilon = "\233";
   public final static char epsilonChar = epsilon.charAt( 0);
   
-  public final static String terminus = "$";
+  public final static String terminus = "\252";
   public final static char terminusChar = terminus.charAt( 0);
   
-  public final static String augment = "!";
+  public final static String augment = "\216";
   public final static char augmentChar = augment.charAt( 0);
   
   public Grammar()
@@ -42,7 +42,7 @@ public class Grammar
    * Add a rule to the grammar.
    * @param rule The rule.
    */
-  public void addRule( Rule rule)
+  public void rule( Rule rule)
   {
     if ( start == null) start = rule;
     rules.add( rule);
@@ -65,9 +65,9 @@ public class Grammar
    * @param name The name.
    * @return Returns the new rule.
    */
-  public Rule addRule( String name)
+  public Rule rule( String name)
   {
-    return addRule( null, name);
+    return rule( null, name);
   }
   
   /**
@@ -76,11 +76,11 @@ public class Grammar
    * @param name The name.
    * @return Returns the new rule.
    */
-  public Rule addRule( IHandler handler, String name)
+  public Rule rule( IHandler handler, String name)
   {
     Rule rule = new Rule( name);
     rule.handler = handler;
-    addRule( rule);
+    rule( rule);
     return rule;
   }
   
@@ -90,9 +90,9 @@ public class Grammar
    * @param rhs The right-hand side of the rule.
    * @return Returns the new rule.
    */
-  public Rule addRule( String name, String... rhs)
+  public Rule rule( String name, String... rhs)
   {
-    return addRule( null, name, rhs);
+    return rule( null, name, rhs);
   }
   
   /**
@@ -102,11 +102,40 @@ public class Grammar
    * @param rhs The right-hand side of the rule.
    * @return Returns the new rule.
    */
-  public Rule addRule( IHandler handler, String name, String... rhs)
+  public Rule rule( IHandler handler, String name, String... rhs)
   {
     Rule rule = new Rule( name, rhs);
     rule.handler = handler;
-    addRule( rule);
+    rule( rule);
+    return rule;
+  }
+  
+  /**
+   * Create and add a new rule with the specified name and rhs.
+   * @param name The name.
+   * @param rhs The right-hand side of the rule.
+   * @return Returns the new rule.
+   */
+  public Rule rule( String name, char... rhs)
+  {
+    return rule( null, name, rhs);
+  }
+  
+  /**
+   * Create and add a new rule with the specified name and rhs.
+   * @param handler Null or the production handler for the rule.
+   * @param name The name.
+   * @param rhs The right-hand side of the rule.
+   * @return Returns the new rule.
+   */
+  public Rule rule( IHandler handler, String name, char... rhs)
+  {
+	String[] terminals = new String[ rhs.length];
+	for( int i=0; i<rhs.length; i++)
+	  terminals[ i] = String.format( "#%02X", (int)rhs[ i]);
+    Rule rule = new Rule( name, terminals);
+    rule.handler = handler;
+    rule( rule);
     return rule;
   }
   

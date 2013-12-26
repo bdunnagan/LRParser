@@ -34,7 +34,7 @@ public class Test
         }
       }
       
-      grammar.addRule( rule);
+      grammar.rule( rule);
     }
     
     return grammar;

@@ -42,7 +42,7 @@ public class LR1
     State start = createStates( grammar, itemSets);
     grammar.freeGraph();
 
-    log.infof( "\nFound %d conflicts.", conflicts);
+    log.infof( "\nFound %d conflicts in %d states.", conflicts, itemSets.size());
     
     return new Parser( this, start);
   }
@@ -124,7 +124,7 @@ public class LR1
     
     for( LR1ItemSet itemSet: itemSets) 
     {
-      log.infof( "\n%s", itemSet);
+      log.debugf( "\n%s", itemSet);
       itemSet.state = new State();
       itemSet.state.index = counter++;
       itemSetMap.put( itemSet.state, itemSet);

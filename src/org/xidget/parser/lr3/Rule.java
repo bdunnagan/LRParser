@@ -34,9 +34,10 @@ public final class Rule
    * Set the priority of the rule (default: 0).
    * @param priority The priority.
    */
-  public void setPriority( long priority)
+  public Rule setPriority( long priority)
   {
     this.priority = priority;
+    return this;
   }
   
   /**
