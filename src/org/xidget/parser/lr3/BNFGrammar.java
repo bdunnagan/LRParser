@@ -87,7 +87,7 @@ public class BNFGrammar extends Grammar
   }
   
   private IHandler handler = new IHandler() {
-    public void onProduction( Rule rule, char[] buffer, int start, int length)
+    public void onProduction( Parser parser, Rule rule, char[] buffer, int start, int length)
     {
       System.out.println( rule.name());
 //      String string = new String( buffer, start, length);

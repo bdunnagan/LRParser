@@ -80,7 +80,7 @@ public final class Graph
       }
     }
     
-    System.out.printf( "follow: %s %s\n", nt, result);
+    //System.out.printf( "follow: %s %s\n", nt, result);
     
     return result;
   }

@@ -3,9 +3,12 @@ package org.xidget.parser.lr3;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Arrays;
-import org.xidget.parser.lr3.lr1.LR1;
 
-public class Parser
+import org.xidget.parser.lr3.Rule.IHandler;
+import org.xidget.parser.lr3.lr1.LR1;
+import org.xidget.parser.lr3.lr1.LR1ItemSet;
+
+public class Parser implements IHandler
 {
   /**
    * Create a Parser with the specified table generator and start state.
@@ -68,6 +71,20 @@ public class Parser
       }
     }
   }
+  
+  public dumpState()
+  {
+	dfa.
+  }
+  
+
+  /* (non-Javadoc)
+   * @see org.xidget.parser.lr3.Rule.IHandler#onProduction(org.xidget.parser.lr3.Parser, org.xidget.parser.lr3.Rule, char[], int, int)
+   */
+  @Override
+  public void onProduction( Parser parser, Rule rule, char[] buffer, int start, int length) 
+  {
+  }
 
   /**
    * Called when a DFA errors.
@@ -78,6 +95,13 @@ public class Parser
    */
   protected void onError( DFA dfa, int index, State[] stack, int sindex)
   {
+	for( int i=0; i<stack.length; i++)
+	{
+	  LR1ItemSet itemSet = lr.itemSet( stack[ i]);
+	  if ( itemSet != null)
+    	System.out.printf( "%d: %s\n", i, itemSet);
+	}
+	  
     System.out.printf( "%s Parsing error at offset %d: \n", dfa, index);
 
 //    int s = index;

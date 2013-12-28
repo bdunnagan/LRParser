@@ -79,8 +79,8 @@ public final class DFA
       State state = sstack[ sindex];
       StackOp[] ops = state.stackOps;
       
-//      System.out.printf( "[%c] ", buffer[ offset]);
-//      printStack();
+      System.out.printf( "[%c] ", buffer[ offset]);
+      printStack();
       
       if ( ops == null) 
       {
@@ -135,16 +135,17 @@ public final class DFA
         {
           // pstack contains the absolute position
           int position = pstack[ sindex] - removed;
-          reduce.handler.onProduction( reduce, buffer, position, offset - position);
-          consumed = offset;
+          reduce.handler.onProduction( parser, reduce, buffer, position, offset - position);
         }
         
+        consumed = offset;
         state = sstack[ sindex].gotos[ reduce.symbol];
         sstack[ ++sindex] = state;
       }
       else
       {
         offset++;
+        consumed++;
         
         if ( ++sindex == sstack.length)
         {
@@ -160,6 +161,15 @@ public final class DFA
     }
     
     return consumed;
+  }
+  
+  /**
+   * @return Returns the current state.
+   */
+  public State getState()
+  {
+	if ( branchDFA != null) return branchDFA.getState();
+	return sstack[ sindex];
   }
   
   /**

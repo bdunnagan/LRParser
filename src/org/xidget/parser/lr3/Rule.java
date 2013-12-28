@@ -145,12 +145,13 @@ public final class Rule
      * size required by the parser can be reduced by insuring that top-level rules do not request
      * that a handle be provided.  Top-level rules usually do not need their handles, because they
      * handles will already have been provided to their constituents.
+     * @param parser The parser.
      * @param rule The rule.
      * @param buffer The buffer containing the handle.
      * @param start The starting offset of the handle.
      * @param length The length of the handle.
      */
-    public void onProduction( Rule rule, char[] buffer, int start, int length);
+    public void onProduction( Parser parser, Rule rule, char[] buffer, int start, int length);
   }
   
   public IHandler handler;

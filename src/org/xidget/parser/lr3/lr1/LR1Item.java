@@ -116,12 +116,12 @@ public class LR1Item
     for( String symbol: rule.rhs())
     {
       if ( symbol.matches( "\\s++")) symbol = String.format( "#%02X", (int)symbol.charAt( 0));
-      sb.append( (index == dot)? 'á': ' ');  
+      sb.append( (index == dot)? 'â€¢': ' ');  
       sb.append( symbol);
       index++;
     }
     
-    if ( dot == index) sb.append( 'á');
+    if ( dot == index) sb.append( 'â€¢');
 
     sb.append( ", ");
     for( String symbol: laList)

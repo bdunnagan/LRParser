@@ -10,13 +10,13 @@ import org.xidget.parser.lr3.Rule.IHandler;
 
 public class Grammar
 {
-  public final static String epsilon = "\233";
+  public final static String epsilon = "ø";
   public final static char epsilonChar = epsilon.charAt( 0);
   
-  public final static String terminus = "\252";
+  public final static String terminus = "¬";
   public final static char terminusChar = terminus.charAt( 0);
   
-  public final static String augment = "\216";
+  public final static String augment = "Å";
   public final static char augmentChar = augment.charAt( 0);
   
   public Grammar()
@@ -36,6 +36,15 @@ public class Grammar
           String.format( "Rule %s not defined.", name));
     
     start = map.get( name).get( 0);
+  }
+
+  /**
+   * Set the default priority for new rules.
+   * @param priority The priority.
+   */
+  public void setPriority( int priority)
+  {
+	this.priority = priority;
   }
   
   /**
@@ -78,7 +87,7 @@ public class Grammar
    */
   public Rule rule( IHandler handler, String name)
   {
-    Rule rule = new Rule( name);
+    Rule rule = new Rule( name).setPriority( priority);
     rule.handler = handler;
     rule( rule);
     return rule;
@@ -104,7 +113,7 @@ public class Grammar
    */
   public Rule rule( IHandler handler, String name, String... rhs)
   {
-    Rule rule = new Rule( name, rhs);
+    Rule rule = new Rule( name, rhs).setPriority( priority);
     rule.handler = handler;
     rule( rule);
     return rule;
@@ -132,8 +141,11 @@ public class Grammar
   {
 	String[] terminals = new String[ rhs.length];
 	for( int i=0; i<rhs.length; i++)
+	{
 	  terminals[ i] = String.format( "#%02X", (int)rhs[ i]);
-    Rule rule = new Rule( name, terminals);
+	  
+	}
+    Rule rule = new Rule( name, terminals).setPriority( priority);
     rule.handler = handler;
     rule( rule);
     return rule;
@@ -323,4 +335,5 @@ public class Grammar
   private LinkedHashMap<String, List<Rule>> map;
   private Graph graph;
   private boolean augmented;
+  private int priority;
 }

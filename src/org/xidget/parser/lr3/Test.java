@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.util.Arrays;
+
 import org.xidget.parser.lr3.Rule.IHandler;
 import org.xidget.parser.lr3.lr1.LR1;
 import org.xmodel.log.Log;
@@ -53,7 +54,7 @@ public class Test
     Grammar grammar = test.parse( cfg);
     
     IHandler handler = new IHandler() {
-      public void onProduction( Rule rule, char[] buffer, int start, int length)
+      public void onProduction( Parser parser, Rule rule, char[] buffer, int start, int length)
       {
         String string = new String( buffer, 0, buffer.length);
         System.out.printf( "|%s|\n", rule);
