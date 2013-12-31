@@ -43,6 +43,15 @@ public final class DFA
   }
   
   /**
+   * @return Returns the current state.
+   */
+  public State getState()
+  {
+	if ( branchDFA != null) return branchDFA.getState();
+	return sstack[ sindex];
+  }
+    
+  /**
    * Parse the specified characters from the buffer.
    * @param parse The parser.
    * @param buffer The buffer containing the characters.
@@ -70,9 +79,9 @@ public final class DFA
       }
     }
     
-    int consumed = 0;
+    int offset = start;
     int last = start + length;
-    for( int offset = start; offset < last; )
+    while( offset < last)
     {
       int symbol = buffer[ offset];
       
@@ -80,28 +89,10 @@ public final class DFA
       StackOp[] ops = state.stackOps;
       
       System.out.printf( "[%c] ", buffer[ offset]);
-      printStack();
+      parser.dumpState();
       
       if ( ops == null) 
-      {
-        branches = state.splits;
-        branchIndex = 0;
-        branchDFA = new DFA( this, branches[ branchIndex]);
-        while( branchDFA != null)
-        {
-          int result = branchDFA.parse( parser, buffer, offset, last - offset, removed);
-          if ( result == -2) return -2;
-          if ( result == -1)
-          {
-            if ( ++branchIndex == branches.length) return -1;
-            branchDFA = new DFA( this, branches[ branchIndex]);
-          }
-          else
-          {
-            return result;
-          }
-        }
-      }
+        return branch( state.splits, parser, buffer, offset, last - offset, removed);
       
       StackOp op = ops[ 0];
       if ( symbol < op.low || symbol > op.high)
@@ -138,14 +129,12 @@ public final class DFA
           reduce.handler.onProduction( parser, reduce, buffer, position, offset - position);
         }
         
-        consumed = offset;
         state = sstack[ sindex].gotos[ reduce.symbol];
         sstack[ ++sindex] = state;
       }
       else
       {
         offset++;
-        consumed++;
         
         if ( ++sindex == sstack.length)
         {
@@ -160,16 +149,41 @@ public final class DFA
       pstack[ sindex] = offset + removed;
     }
     
-    return consumed;
+    return offset;
   }
   
   /**
-   * @return Returns the current state.
+   * Handle a branch point.
+   * @param branches The branches.
+   * @param parser The parser.
+   * @param buffer The buffer.
+   * @param start The starting offset into the buffer.
+   * @param length The length of the buffer.
+   * @param removed The number of characters removed from the buffer.
+   * @return Returns the offset into the buffer of the first handle that should be preserved.
+   *         If an error occurs then -1 is returned.
+   *         If parsing is complete then -2 is returned.
    */
-  public State getState()
+  private int branch( State[] branches, Parser parser, char[] buffer, int start, int length, int removed)
   {
-	if ( branchDFA != null) return branchDFA.getState();
-	return sstack[ sindex];
+    this.branches = branches;
+    branchIndex = 0;
+    branchDFA = new DFA( this, branches[ branchIndex]);
+    while( branchDFA != null)
+    {
+      int result = branchDFA.parse( parser, buffer, start, length, removed);
+      if ( result == -2) return -2;
+      if ( result == -1)
+      {
+        if ( ++branchIndex == branches.length) return -1;
+        branchDFA = new DFA( this, branches[ branchIndex]);
+      }
+      else
+      {
+        return result;
+      }
+    }	
+    return -1;
   }
   
   /**

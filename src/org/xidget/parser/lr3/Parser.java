@@ -71,10 +71,25 @@ public class Parser implements IHandler
       }
     }
   }
-  
-  public dumpState()
+
+  /**
+   * Show the current state of the parser.
+   */
+  public void dumpState()
   {
-	dfa.
+	System.out.println( "---------------------------------------------");
+	System.out.println( lr.itemSet( dfa.getState()));
+	System.out.println( "---------------------------------------------");
+  }
+  
+  /**
+   * Returns the item-set for the specified state.
+   * @param state The state.
+   * @return Returns the item-set for the specified state.
+   */
+  public LR1ItemSet itemSet( State state)
+  {
+	return lr.itemSet( state);
   }
   
 
@@ -95,14 +110,8 @@ public class Parser implements IHandler
    */
   protected void onError( DFA dfa, int index, State[] stack, int sindex)
   {
-	for( int i=0; i<stack.length; i++)
-	{
-	  LR1ItemSet itemSet = lr.itemSet( stack[ i]);
-	  if ( itemSet != null)
-    	System.out.printf( "%d: %s\n", i, itemSet);
-	}
-	  
     System.out.printf( "%s Parsing error at offset %d: \n", dfa, index);
+    dumpState();
 
 //    int s = index;
 //    for( ; s >= 0 && buffer[ s] != '\n'; s--);

@@ -82,41 +82,47 @@ public class XPath
 	// Step
 	g.rule( handler, "Step", "AxisSpecifier", "NodeTest");
 	g.rule( handler, "Step", "AxisSpecifier", "NodeTest", "PredicateList");
-	g.rule( handler, "Step", "NCName");
-	g.rule( handler, "Step", "NCName", "PredicateList");
+	g.rule( handler, "Step", "QName");
+	g.rule( handler, "Step", "QName", "PredicateList");
 	g.rule( handler, "Step", ".");
 	g.rule( handler, "Step", ".", ".");
 	
 	// Node Test
-	g.rule( "NodeTest", "QName");
-	g.rule( "NodeTest", "NCName", ":", "*");
+	g.rule( handler, "NodeTest", "QName");
+	g.rule( handler, "NodeTest", "NCName", ":", "*");
+	g.rule( handler, "NodeTest", "*");
+	g.rule( handler, "NodeTest", "NodeType", "(", ")");
+	g.rule( handler, "NodeTest", "NodeType", "(", "double-quoted", ")");
+	g.rule( handler, "NodeTest", "NodeType", "(", "single-quoted", ")");
 	
-	// NodeType omitted (comment|text|processing-instruction|node)
-	g.rule( "NodeTest", "NCName", "(", "double-quoted", ")");
-	g.rule( "NodeTest", "NCName", "(", "single-quoted", ")");
+	// NodeType
+	g.rule( handler, "NodeType", "comment".toCharArray());
+	g.rule( handler, "NodeType", "text".toCharArray());
+	g.rule( handler, "NodeType", "processing-instruction".toCharArray());
+	g.rule( handler, "NodeType", "node".toCharArray());
 		
 	// Name Test
-	g.rule( "NameTest", "NCName", ":", "*");
-	g.rule( "NameTest", "QName");
+	g.rule( handler, "NameTest", "NCName", ":", "*");
+	g.rule( handler, "NameTest", "QName");
 	
 	// Axis Specifier
-	g.rule( "AxisSpecifier", "AxisName", ":", ":");
-	g.rule( "AxisSpecifier", "@");
+	g.rule( handler, "AxisSpecifier", "AxisName", ":", ":");
+	g.rule( handler, "AxisSpecifier", "@");
 	
 	// axis name
-	g.rule( "AxisName", "ancestor".toCharArray());
-	g.rule( "AxisName", "ancestor-or-self".toCharArray());
-	g.rule( "AxisName", "attribute".toCharArray());
-	g.rule( "AxisName", "child".toCharArray());
-	g.rule( "AxisName", "descendant".toCharArray());
-	g.rule( "AxisName", "descendant-or-self".toCharArray());
-	g.rule( "AxisName", "following".toCharArray());
-	g.rule( "AxisName", "following-sibling".toCharArray());
-	g.rule( "AxisName", "namespace".toCharArray());
-	g.rule( "AxisName", "parent".toCharArray());
-	g.rule( "AxisName", "preceding".toCharArray());
-	g.rule( "AxisName", "preceding-sibling".toCharArray());
-	g.rule( "AxisName", "self".toCharArray());
+	g.rule( handler, "AxisName", "ancestor".toCharArray());
+	g.rule( handler, "AxisName", "ancestor-or-self".toCharArray());
+	g.rule( handler, "AxisName", "attribute".toCharArray());
+	g.rule( handler, "AxisName", "child".toCharArray());
+	g.rule( handler, "AxisName", "descendant".toCharArray());
+	g.rule( handler, "AxisName", "descendant-or-self".toCharArray());
+	g.rule( handler, "AxisName", "following".toCharArray());
+	g.rule( handler, "AxisName", "following-sibling".toCharArray());
+	g.rule( handler, "AxisName", "namespace".toCharArray());
+	g.rule( handler, "AxisName", "parent".toCharArray());
+	g.rule( handler, "AxisName", "preceding".toCharArray());
+	g.rule( handler, "AxisName", "preceding-sibling".toCharArray());
+	g.rule( handler, "AxisName", "self".toCharArray());
   }
   
   /**
@@ -129,16 +135,33 @@ public class XPath
 	g.rule( "QName", "NCName");
 	
 	// NCName
-	g.rule( "NCName", "letter", "nmchars");
-	g.rule( "NCName", "_", "nmchars");
-	g.rule( "nmchars", "nmchar");
-	g.rule( "nmchars", "nmchars", "nmchar");
-	g.rule( "nmchar", "letter");
-	g.rule( "nmchar", "digit");
-	g.rule( "nmchar", ".");
-	g.rule( "nmchar", "-");
-	g.rule( "nmchar", "_");
-			
+	g.rule( "NCName", "NCNameStartChar");
+	g.rule( "NCName", "NCName", "NameChar");
+
+	// Names
+	g.rule( "NameStartChar", ":");
+	g.rule( "NameStartChar", "NCNameStartChar");
+	g.rule( "NCNameStartChar", "_");
+	g.rule( "NCNameStartChar", "letter");
+//	g.rule( "NCNameStartChar", "[#C0-#D6]");
+//	g.rule( "NCNameStartChar", "[#D8-#F6]");
+//	g.rule( "NCNameStartChar", "[#F8-#2FF]");
+//	g.rule( "NCNameStartChar", "[#370-#37D]");
+//	g.rule( "NCNameStartChar", "[#37F-#1FFF]");
+//	g.rule( "NCNameStartChar", "[#200C-#200D]");
+//	g.rule( "NCNameStartChar", "[#2070-#218F]");
+//	g.rule( "NCNameStartChar", "[#2C00-#2FEF]");
+//	g.rule( "NCNameStartChar", "[#3001-#D7FF]");
+//	g.rule( "NCNameStartChar", "[#F900-#FDCF]");
+//	g.rule( "NCNameStartChar", "[#FDF0-#FFFD]");
+
+	g.rule( "NameChar", "NCNameStartChar");
+	g.rule( "NameChar", "-");
+	g.rule( "NameChar", ".");
+	g.rule( "NameChar", "digit");
+//	g.rule( "NameChar", "[#0300-#036F]");
+//	g.rule( "NameChar", "[#203F-#2040]");
+	
 	// number
 	g.rule( "number", "digit");
 	g.rule( "number", "digit", ".", "number");
@@ -174,7 +197,7 @@ public class XPath
   
   public static void main( String[] args) throws Exception
   {
-    LR1.log.setLevel( Log.all);
+    //LR1.log.setLevel( Log.all);
 	  
     IHandler handler = new IHandler() {
       public void onProduction( Parser parser, Rule rule, char[] buffer, int start, int length)
@@ -188,8 +211,7 @@ public class XPath
           char[] underline = new char[ length]; Arrays.fill( underline, '^');
           System.out.printf( "%s%s\n\n", new String( indent), new String( underline));
         }
-        
-        
+        System.out.println();
       }
     };
     
@@ -198,8 +220,6 @@ public class XPath
         
     LR1 lr = new LR1();
     Parser parser = lr.compile( xpath.g);
-    
-    System.out.println( xpath.g);
     
     BufferedReader reader = new BufferedReader( new InputStreamReader( System.in));
     while( true)

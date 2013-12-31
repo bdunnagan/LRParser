@@ -7,10 +7,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import org.xidget.parser.lr3.Grammar;
 import org.xidget.parser.lr3.Rule;
-import org.xidget.parser.lr3.State;
 
 public class LR1ItemSet
 {
@@ -138,6 +136,5 @@ public class LR1ItemSet
   
   public Set<LR1Item> kernel;
   public Set<LR1Item> items;
-  public State state;
   public Map<String, LR1ItemSet> successors;
 }
