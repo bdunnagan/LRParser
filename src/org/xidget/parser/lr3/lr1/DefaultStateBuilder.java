@@ -1,10 +1,9 @@
 package org.xidget.parser.lr3.lr1;
 
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import org.xidget.parser.lr3.Grammar;
 import org.xidget.parser.lr3.State;
 import org.xidget.parser.lr3.State.StackOp;
@@ -16,7 +15,7 @@ public class DefaultStateBuilder implements IStateBuilder
   public DefaultStateBuilder()
   {
     states = new HashMap<LR1ItemSet, State>();
-    branched = new HashSet<LR1Event>();
+    branched = new HashMap<LR1Event, Integer>();
   }
   
   /* (non-Javadoc)
@@ -27,7 +26,6 @@ public class DefaultStateBuilder implements IStateBuilder
   {
     State state = new State();
     state.index = ++counter;
-    state.itemSet = itemSet;
     states.put( itemSet, state);
 
     createSymbolTable( grammar, state, tshifts, ntshifts);
@@ -47,11 +45,9 @@ public class DefaultStateBuilder implements IStateBuilder
       }
       
       stackOp.next = states.get( tOp.itemSet);
-      stackOp.branch = branched.contains( tOp);
+      if ( branched.containsKey( tOp)) branched.put( tOp, i);
     }
     
-    branched.clear();
-
     // non-terminals
     state.gotos = new State[ grammar.rules().size()];
     for( int i=0; i<ntshifts.size(); i++)
@@ -60,6 +56,20 @@ public class DefaultStateBuilder implements IStateBuilder
       State target = states.get( ntOp.itemSet);
       if ( target == null) throw new IllegalStateException();
       state.gotos[ ntOp.symbols[ 0]] = target;
+    }
+    
+    // branches
+    if ( branched.size() > 0)
+    {
+      state.branches = new State[ branched.size()];
+      int i=0;
+      for( Map.Entry<LR1Event, Integer> entry: branched.entrySet())
+      {
+        State newState = copy( state);
+        state.stackOps[ entry.getValue()] = null;
+        state.branches[ i++] = newState;
+      }
+      branched.clear();
     }
   }
   
@@ -98,7 +108,7 @@ public class DefaultStateBuilder implements IStateBuilder
   private void resolveTerminalShiftConflicts( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> tOps)
   {
     for( LR1Event tOp: tOps)
-      branched.add( tOp);
+      branched.put( tOp, -1);
   }
 
   /**
@@ -165,9 +175,23 @@ public class DefaultStateBuilder implements IStateBuilder
     }
   }
   
+  /**
+   * Create a copy of the specified state.
+   * @param state The state.
+   * @return Returns the copy.
+   */
+  private final State copy( State state)
+  {
+    State copy = new State();
+    copy.index = counter++;
+    copy.stackOps = Arrays.copyOf( state.stackOps, state.stackOps.length);
+    copy.gotos = Arrays.copyOf( state.gotos, state.gotos.length);
+    return copy;
+  }    
+  
   private static Log log = Log.getLog( DefaultStateBuilder.class);
   
   private Map<LR1ItemSet, State> states;
-  private Set<LR1Event> branched;
+  private Map<LR1Event, Integer> branched;
   private int counter;
 }

@@ -1,7 +1,5 @@
 package org.xidget.parser.lr3;
 
-import org.xidget.parser.lr3.lr1.LR1ItemSet;
-
 /**
  * Data-structure for a DFA state consisting of an array of integers that maps a symbol to one
  * of the state transitions defined in an array of State objects.  The symbols are sorted so
@@ -58,8 +56,8 @@ public final class State
     public boolean branch;
   }
 
+  public int index;
   public StackOp[] stackOps;
   public State[] gotos;
-  public int index;
-  public LR1ItemSet itemSet;
+  public State[] branches;
 }

@@ -91,36 +91,29 @@ public final class DFA
       System.out.printf( "[%c] ", buffer[ offset]);
       parser.dumpState();
       
-//      if ( ops == null) 
-//        return branch( state.splits, parser, buffer, offset, last - offset, removed);
+      if ( ops == null) 
+        return branch( state.branches, parser, buffer, offset, last - offset, removed);
       
       StackOp op = ops[ 0];
       if ( symbol < op.low || symbol > op.high)
       {
-        boolean found = false;
-        for( int i=1; i<ops.length; i++)
+        int i=0;
+        while( ++i < ops.length)
         {
           op = ops[ i];
           if ( symbol >= op.low && symbol <= op.high)
           {
+            // mem writes may be expensive here
             ops[ i] = ops[ i-1];
             ops[ i-1] = op;
-            found = true;
             break;
           }
         }
-        
-        if ( !found)
+        if ( i == ops.length)
         {
           parser.onError( this, offset, sstack, sindex);
           return -1;
         }
-      }
-      
-      // branch
-      if ( op.branch)
-      {
-        
       }
       
       // reduce
