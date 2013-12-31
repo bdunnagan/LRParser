@@ -1,10 +1,10 @@
 package org.xidget.parser.lr3.lr1;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.xidget.parser.lr3.Grammar;
 import org.xidget.parser.lr3.State;
 import org.xidget.parser.lr3.State.StackOp;
@@ -16,6 +16,7 @@ public class DefaultStateBuilder implements IStateBuilder
   public DefaultStateBuilder()
   {
     states = new HashMap<LR1ItemSet, State>();
+    branched = new HashSet<LR1Event>();
   }
   
   /* (non-Javadoc)
@@ -28,43 +29,46 @@ public class DefaultStateBuilder implements IStateBuilder
     state.index = ++counter;
     state.itemSet = itemSet;
     states.put( itemSet, state);
-    
+
     createSymbolTable( grammar, state, tshifts, ntshifts);
     
     // terminals
     for( int i=0; i<tshifts.size(); i++)
     {
-      LR1Event action = tshifts.get( i);
+      LR1Event tOp = tshifts.get( i);
+      StackOp stackOp = state.stackOps[ i];
       
-      switch( action.type)
+      switch( tOp.type)
       {
-        case tshift: state.stackOps[ i].next = states.get( action.itemSet); break;
-        case reduce: state.stackOps[ i].reduce = action.item.rule; break;
-        case accept: state.stackOps[ i].next = null; break;
+        case tshift: stackOp.next = states.get( tOp.itemSet); break;
+        case reduce: stackOp.reduce = tOp.item.rule; break;
+        case accept: stackOp.next = null; break;
         case ntshift: throw new IllegalStateException();
       }
       
-      state.stackOps[ i].next = states.get( action.itemSet);
+      stackOp.next = states.get( tOp.itemSet);
+      stackOp.branch = branched.contains( tOp);
     }
+    
+    branched.clear();
 
     // non-terminals
     state.gotos = new State[ grammar.rules().size()];
-    
     for( int i=0; i<ntshifts.size(); i++)
     {
-      LR1Event action = ntshifts.get( i);
-      state.gotos[ action.symbols[ 0]] = states.get( action.itemSet);
+      LR1Event ntOp = ntshifts.get( i);
+      State target = states.get( ntOp.itemSet);
+      if ( target == null) throw new IllegalStateException();
+      state.gotos[ ntOp.symbols[ 0]] = target;
     }
   }
   
   /* (non-Javadoc)
-   * @see org.xidget.parser.lr3.lr1.IStateBuilder#resolveTerminalConflicts(org.xidget.parser.lr3.Grammar, org.xidget.parser.lr3.lr1.LR1ItemSet, java.util.List)
+   * @see org.xidget.parser.lr3.lr1.IStateBuilder#handleTerminalConflicts(org.xidget.parser.lr3.Grammar, org.xidget.parser.lr3.lr1.LR1ItemSet, java.util.List)
    */
   @Override
-  public void resolveTerminalConflicts( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> tOps)
+  public void handleTerminalConflicts( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> tOps)
   {
-    List<State> splits = new ArrayList<State>();
-    
     //
     // Rule 1: If there is at least one shift, then ignore reductions.
     // (Type.reduce follows Type.tshift)
@@ -76,103 +80,13 @@ public class DefaultStateBuilder implements IStateBuilder
     }
     
     //
-    // Rule 2:
+    // Rule 2: Resolve reduction conflicts by choosing the rule that comes first in the grammar.
     //
-    
-    
-    boolean conflict =
-      (curr.type == LR1Event.Type.tshift && prev.type == LR1Event.Type.reduce) || 
-      (curr.type == LR1Event.Type.reduce && prev.type == LR1Event.Type.tshift) ||
-      (curr.type == LR1Event.Type.tshift && prev.type == LR1Event.Type.tshift);
-
-    if ( conflict)
+    if ( tOps.get( 0).type == Type.reduce)
     {
-      long prevPriority = prev.getPriority();
-      long currPriority = curr.getPriority();
-      if ( prevPriority < currPriority)
-      {
-        log.debugf( "\nConflict in state %d:\n    %s\n    %s", state.index, prev, curr);
-        log.debug( "Conflict resolved: second rule(s) have higher priority");
-        deleteStackOp( state, k-1); k--;
-      }
-      else if ( prevPriority > currPriority)
-      {
-        log.debugf( "\nConflict in state %d:\n    %s\n    %s", state.index, prev, curr);
-        log.debug( "Conflict resolved: first rule(s) have higher priority");
-        deleteStackOp( state, k); k--;
-      }
-      else
-      {
-        log.warnf( "\nConflict in state %d:\n    %s\n    %s", state.index, prev, curr);
-        log.warn( "Conflict resolved by splitting state");
-        splitState( state, k, prevSplit, splits);
-        currSplit = splits.get( splits.size() - 1);
-        conflicts++;
-      }
+      resolveTerminalReduceConflicts( grammar, itemSet, tOps);
+      return;
     }
-    else if ( curr.type == LR1Event.Type.reduce && prev.type == LR1Event.Type.reduce)
-    {
-      if ( prev.symbols.length > curr.symbols.length)
-      {
-        StackOp[] ops = new StackOp[ state.stackOps.length - 1];
-        System.arraycopy( state.stackOps, 0, ops, 0, i);
-        System.arraycopy( state.stackOps, i+1, ops, i, ops.length - i);    
-        state.stackOps = ops;
-        tshifts.remove( i--);
-      }
-      else
-      {
-        tshifts.remove( --i);
-        StackOp[] ops = new StackOp[ state.stackOps.length - 1];
-        System.arraycopy( state.stackOps, 0, ops, 0, i);
-        System.arraycopy( state.stackOps, i+1, ops, i, ops.length - i);    
-        state.stackOps = ops;
-      }
-    }
-    
-    if ( splits.size() > 0)
-    {
-      for( State split: splits) 
-      {
-        log.debugf( "Created new state %d to resolve conflict.", split.index);
-        removeNulls( split);
-        
-        for( StackOp shift: split.stackOps)
-        {
-          if ( shift == nullShift)
-            throw new IllegalStateException();
-        }
-      }
-
-      state.splits = splits.toArray( new State[ 0]);
-      state.stackOps = null;
-      state.gotos = null;
-    }
-  }
-
-  /* (non-Javadoc)
-   * @see org.xidget.parser.lr3.lr1.IStateBuilder#resolveNonTerminalConflicts(org.xidget.parser.lr3.Grammar, org.xidget.parser.lr3.lr1.LR1ItemSet, java.util.List)
-   */
-  @Override
-  public void resolveNonTerminalConflicts( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> events)
-  {
-    for( int i=1; i<ntshifts.size(); i++)
-    {
-      prevSplit = currSplit;
-      currSplit = null;
-      
-      LR1Event prev = ntshifts.get( i-1);
-      LR1Event curr = ntshifts.get( i);
-      
-      if ( curr.symbols[ 0] <= prev.symbols[ 0])
-      {
-        if ( curr.type == LR1Event.Type.ntshift && prev.type == LR1Event.Type.ntshift && curr.itemSet.equals( prev.itemSet))
-        {
-          log.warnf( "\nConflict in state %d:\n    %s\n    %s", state.index, prev, curr);
-          conflicts++;
-        }
-      }
-    }    
   }
   
   /**
@@ -183,92 +97,77 @@ public class DefaultStateBuilder implements IStateBuilder
    */
   private void resolveTerminalShiftConflicts( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> tOps)
   {
+    for( LR1Event tOp: tOps)
+      branched.add( tOp);
   }
 
+  /**
+   * Resolve terminal reduce conflicts.
+   * @param grammar The grammar.
+   * @param itemSet The item set.
+   * @param tOps The terminal operations.
+   */
+  private void resolveTerminalReduceConflicts( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> tOps)
+  {
+    int minIndex = Integer.MAX_VALUE;
+    for( int i=0; i<tOps.size(); i++)
+    {
+      LR1Event tOp = tOps.get( i);
+      int index = grammar.rules().indexOf( tOp.item.rule);
+      if ( index < minIndex) minIndex = index;
+    }
+    
+    tOps.subList( 0, minIndex).clear();
+    tOps.subList( minIndex + 1, tOps.size()).clear();
+  }
+
+  /* (non-Javadoc)
+   * @see org.xidget.parser.lr3.lr1.IStateBuilder#handleNonTerminalConflicts(org.xidget.parser.lr3.Grammar, org.xidget.parser.lr3.lr1.LR1ItemSet, java.util.List)
+   */
+  @Override
+  public void handleNonTerminalConflicts( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> ntOps)
+  {
+    StringBuilder sb = new StringBuilder();
+    for( LR1Event ntOp: ntOps)
+    {
+      sb.append( ntOp.item);
+      sb.append( '\n');
+    }
+    log.warnf( "The following rules conflict:\n%s", sb);
+  }
+  
   /**
    * Create the symbol table for the specified state.
    * @param grammar The grammar.
    * @param state The state.
-   * @param tshifts The state changes triggered by terminals.
-   * @param ntshifts The state changes triggered by non-terminals.
+   * @param tOps The state changes triggered by terminals.
+   * @param ntOps The state changes triggered by non-terminals.
    */
-  private void createSymbolTable( Grammar grammar, State state, List<LR1Event> tshifts, List<LR1Event> ntshifts)
+  private void createSymbolTable( Grammar grammar, State state, List<LR1Event> tOps, List<LR1Event> ntOps)
   {
-    state.stackOps = new StackOp[ tshifts.size()];
+    state.stackOps = new StackOp[ tOps.size()];
     for( int i=0; i<state.stackOps.length; i++)
     {
-      StackOp shift = new StackOp();
-      state.stackOps[ i] = shift;
+      StackOp stackOp = new StackOp();
+      state.stackOps[ i] = stackOp;
       
-      int[] symbol = tshifts.get( i).symbols;
+      int[] symbol = tOps.get( i).symbols;
       if ( symbol.length == 2)
       {
-        shift.low = symbol[ 0];
-        shift.high = symbol[ 1];
+        stackOp.low = symbol[ 0];
+        stackOp.high = symbol[ 1];
       }
       else if ( symbol.length == 1)
       {
-        shift.low = symbol[ 0];
-        shift.high = symbol[ 0];
+        stackOp.low = symbol[ 0];
+        stackOp.high = symbol[ 0];
       }
     }
   }
   
-  /**
-   * Remove null shifts introduced into split state.
-   * @param state A split state.
-   */
-  private void removeNulls( State state)
-  {
-    StackOp[] shifts = new StackOp[ state.stackOps.length - 1];
-    for( int i=0, j=0; j < shifts.length; i++)
-    {
-      if ( state.stackOps[ i] != nullShift)
-        shifts[ j++] = state.stackOps[ i];
-    }
-    state.stackOps = shifts;
-  }
-    
-  /**
-   * Split the specified state at the specified overlapping symbol.
-   * @param state The state.
-   * @param i The index of the overlapping symbol.
-   * @param split Null or the previous split.
-   * @param result The list where the new states will be added.
-   */
-  private void splitState( State state, int i, State split, List<State> result)
-  {
-    if ( split == null)
-    {
-      State v1 = copy( state);
-      v1.stackOps[ i] = nullShift;
-      result.add( v1);
-    }
-    
-    State v2 = copy( state);
-    v2.stackOps[ i-1] = nullShift;
-    result.add( v2);
-  }
-  
-  /**
-   * Create a copy of the specified state.
-   * @param state The state.
-   * @return Returns the copy.
-   */
-  private final State copy( State state)
-  {
-    State copy = new State();
-    copy.index = counter++;
-    copy.stackOps = Arrays.copyOf( state.stackOps, state.stackOps.length);
-    copy.gotos = Arrays.copyOf( state.gotos, state.gotos.length);
-    copy.itemSet = state.itemSet;
-    return copy;
-  }  
-  
   private static Log log = Log.getLog( DefaultStateBuilder.class);
-  private final static StackOp nullShift = new StackOp();
   
   private Map<LR1ItemSet, State> states;
+  private Set<LR1Event> branched;
   private int counter;
-  private int conflicts;
 }

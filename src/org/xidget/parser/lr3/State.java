@@ -55,9 +55,9 @@ public final class State
     public int high;
     public State next;
     public Rule reduce;
+    public boolean branch;
   }
 
-  public State[] splits;
   public StackOp[] stackOps;
   public State[] gotos;
   public int index;

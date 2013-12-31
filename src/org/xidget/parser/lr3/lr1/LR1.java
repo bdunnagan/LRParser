@@ -3,7 +3,6 @@ package org.xidget.parser.lr3.lr1;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -11,7 +10,6 @@ import java.util.Map;
 import java.util.Set;
 import org.xidget.parser.lr3.Grammar;
 import org.xidget.parser.lr3.Rule;
-import org.xidget.parser.lr3.State;
 import org.xmodel.log.Log;
 
 /**
@@ -35,7 +33,7 @@ public class LR1
     createStates( grammar, itemSets, builder);
     grammar.freeGraph();
 
-//    log.infof( "\nFound %d conflicts in %d states -> %d total states.", conflicts, itemSets.size(), counter);
+    log.infof( "Found %d conflicts in %d states.", conflicts, itemSets.size());
   }
 
   /**
@@ -171,32 +169,40 @@ public class LR1
       Collections.sort( tOps);
       Collections.sort( ntOps);
       
-      resolveConflicts( grammar, itemSet, tOps, ntOps, builder);
+      handleConflicts( grammar, itemSet, tOps, ntOps, builder);
       builder.createState( grammar, itemSet, tOps, ntOps);
     }    
   }
   
   /**
-   * Resolve any conflicts found in the specified state by splitting it for GLR processing.
+   * Handle any conflicts found in the specified state.
    * @param grammar The grammar.
    * @param itemSet The item set.
    * @param tOps The state changes triggered by terminals.
    * @param ntOps The state changes triggered by non-terminals.
    * @param builder The state builder implementation.
    */
-  private void resolveConflicts( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> tOps, List<LR1Event> ntOps, IStateBuilder builder)
+  private void handleConflicts( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> tOps, List<LR1Event> ntOps, IStateBuilder builder)
   {
     for( int i=0; i<tOps.size(); )
     {
       int count = findOverlappingExtent( tOps, i);
-      builder.resolveTerminalConflicts( grammar, itemSet, tOps.subList( i, i + count));
+      if ( count > 1)
+      {
+        builder.handleTerminalConflicts( grammar, itemSet, tOps.subList( i, i + count));
+        conflicts++;
+      }
       i += count;
     }
     
     for( int i=0; i<ntOps.size(); )
     {
       int count = findOverlappingExtent( ntOps, i);
-      builder.resolveNonTerminalConflicts( grammar, itemSet, ntOps.subList( i, i + count));
+      if ( count > 1)
+      {
+        builder.handleNonTerminalConflicts( grammar, itemSet, ntOps.subList( i, i + count));
+        conflicts++;
+      }
       i += count;    
     }
   }
@@ -222,4 +228,5 @@ public class LR1
   public final static Log log = Log.getLog( LR1.class);
   
   private Collection<LR1ItemSet> itemSets;
+  private int conflicts;
 }

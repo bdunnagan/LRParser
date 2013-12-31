@@ -91,8 +91,8 @@ public final class DFA
       System.out.printf( "[%c] ", buffer[ offset]);
       parser.dumpState();
       
-      if ( ops == null) 
-        return branch( state.splits, parser, buffer, offset, last - offset, removed);
+//      if ( ops == null) 
+//        return branch( state.splits, parser, buffer, offset, last - offset, removed);
       
       StackOp op = ops[ 0];
       if ( symbol < op.low || symbol > op.high)
@@ -117,6 +117,13 @@ public final class DFA
         }
       }
       
+      // branch
+      if ( op.branch)
+      {
+        
+      }
+      
+      // reduce
       Rule reduce = op.reduce;
       if ( reduce != null)
       {
@@ -132,6 +139,8 @@ public final class DFA
         state = sstack[ sindex].gotos[ reduce.symbol];
         sstack[ ++sindex] = state;
       }
+      
+      // shift
       else
       {
         offset++;
