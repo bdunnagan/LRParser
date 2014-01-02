@@ -1,10 +1,15 @@
 package org.xidget.parser.lr3.lr1;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
 import org.xidget.parser.lr3.Grammar;
+import org.xidget.parser.lr3.Parser;
 import org.xidget.parser.lr3.State;
 import org.xidget.parser.lr3.State.StackOp;
 import org.xidget.parser.lr3.lr1.LR1Event.Type;
@@ -15,45 +20,80 @@ public class DefaultStateBuilder implements IStateBuilder
   public DefaultStateBuilder()
   {
     states = new HashMap<LR1ItemSet, State>();
-    branched = new HashMap<LR1Event, Integer>();
+    itemSets = new HashMap<State, LR1ItemSet>();
+    branches = new HashSet<LR1Event>();
+  }
+  
+  /**
+   * @return Returns the generated parser.
+   */
+  public Parser getParser()
+  {
+    return new Parser( this, start);
+  }
+  
+  /**
+   * Get the item set for the specified state.
+   * @param state The state.
+   * @return Returns the item set.
+   */
+  public LR1ItemSet getItemSet( State state)
+  {
+    return itemSets.get( state);
   }
   
   /* (non-Javadoc)
    * @see org.xidget.parser.lr3.lr1.IStateBuilder#createState(org.xidget.parser.lr3.Grammar, org.xidget.parser.lr3.lr1.LR1ItemSet, java.util.List, java.util.List)
    */
   @Override
-  public void createState( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> tshifts, List<LR1Event> ntshifts)
+  public void createState( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> tOps, List<LR1Event> ntOps)
   {
-    State state = new State();
-    state.index = ++counter;
-    states.put( itemSet, state);
-
-    createSymbolTable( grammar, state, tshifts, ntshifts);
+    State state = getCreateState( itemSet);
+    if ( state.stackOps == null) createSymbolTable( grammar, state, tOps, ntOps);
+    
+    if ( branches.size() > 0)
+    {
+      state.branches = new State[ branches.size()];
+      state.stackOps = null;
+      
+      List<LR1Event> btOps = new ArrayList<LR1Event>( tOps);
+      btOps.removeAll( branches);
+      btOps.add( branches);
+      
+      for( State branch: state.branches)
+      {
+      }
+    }
+    else
+    {
+      createStackOps( grammar, state, tOps, ntOps);
+    }
+    
     
     // terminals
-    for( int i=0; i<tshifts.size(); i++)
+    for( int i=0; i<tOps.size(); i++)
     {
-      LR1Event tOp = tshifts.get( i);
+      LR1Event tOp = tOps.get( i);
       StackOp stackOp = state.stackOps[ i];
       
       switch( tOp.type)
       {
-        case tshift: stackOp.next = states.get( tOp.itemSet); break;
+        case tshift: stackOp.next = getCreateState( tOp.itemSet); break;
         case reduce: stackOp.reduce = tOp.item.rule; break;
         case accept: stackOp.next = null; break;
         case ntshift: throw new IllegalStateException();
       }
       
-      stackOp.next = states.get( tOp.itemSet);
+      stackOp.next = getCreateState( tOp.itemSet);
       if ( branched.containsKey( tOp)) branched.put( tOp, i);
     }
     
     // non-terminals
     state.gotos = new State[ grammar.rules().size()];
-    for( int i=0; i<ntshifts.size(); i++)
+    for( int i=0; i<ntOps.size(); i++)
     {
-      LR1Event ntOp = ntshifts.get( i);
-      State target = states.get( ntOp.itemSet);
+      LR1Event ntOp = ntOps.get( i);
+      State target = getCreateState( ntOp.itemSet);
       if ( target == null) throw new IllegalStateException();
       state.gotos[ ntOp.symbols[ 0]] = target;
     }
@@ -66,11 +106,58 @@ public class DefaultStateBuilder implements IStateBuilder
       for( Map.Entry<LR1Event, Integer> entry: branched.entrySet())
       {
         State newState = copy( state);
-        state.stackOps[ entry.getValue()] = null;
+        newState.stackOps[ entry.getValue()] = null;
         state.branches[ i++] = newState;
       }
       branched.clear();
+      
+      state.stackOps = null;
     }
+  }
+  
+  private void createStackOps( Grammar grammar, State state, List<LR1Event> tOps, List<LR1Event> ntOps)
+  {
+    // terminals
+    for( int i=0; i<tOps.size(); i++)
+    {
+      LR1Event tOp = tOps.get( i);
+      StackOp stackOp = state.stackOps[ i];
+      
+      switch( tOp.type)
+      {
+        case tshift: stackOp.next = getCreateState( tOp.itemSet); break;
+        case reduce: stackOp.reduce = tOp.item.rule; break;
+        case accept: stackOp.next = null; break;
+        case ntshift: throw new IllegalStateException();
+      }
+      
+      stackOp.next = getCreateState( tOp.itemSet);
+    }
+    
+    // non-terminals
+    state.gotos = new State[ grammar.rules().size()];
+    for( int i=0; i<ntOps.size(); i++)
+    {
+      LR1Event ntOp = ntOps.get( i);
+      State target = getCreateState( ntOp.itemSet);
+      if ( target == null) throw new IllegalStateException();
+      state.gotos[ ntOp.symbols[ 0]] = target;
+    }    
+  }
+  
+  private State getCreateState( LR1ItemSet itemSet)
+  {
+    State state = states.get( itemSet);
+    if ( state == null)
+    {
+      state = new State();
+      state.index = ++counter;
+      states.put( itemSet, state);
+      itemSets.put( state, itemSet);
+      
+      if ( start == null) start = state;
+    }
+    return state;
   }
   
   /* (non-Javadoc)
@@ -108,7 +195,7 @@ public class DefaultStateBuilder implements IStateBuilder
   private void resolveTerminalShiftConflicts( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> tOps)
   {
     for( LR1Event tOp: tOps)
-      branched.put( tOp, -1);
+      branches.add( tOp);
   }
 
   /**
@@ -119,16 +206,21 @@ public class DefaultStateBuilder implements IStateBuilder
    */
   private void resolveTerminalReduceConflicts( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> tOps)
   {
-    int minIndex = Integer.MAX_VALUE;
+    int minRuleIndex = Integer.MAX_VALUE;
+    int minOpIndex = 0;
     for( int i=0; i<tOps.size(); i++)
     {
       LR1Event tOp = tOps.get( i);
       int index = grammar.rules().indexOf( tOp.item.rule);
-      if ( index < minIndex) minIndex = index;
+      if ( index < minRuleIndex) 
+      {
+        minRuleIndex = index;
+        minOpIndex = i;
+      }
     }
     
-    tOps.subList( 0, minIndex).clear();
-    tOps.subList( minIndex + 1, tOps.size()).clear();
+    tOps.subList( 0, minOpIndex).clear();
+    tOps.subList( minOpIndex + 1, tOps.size()).clear();
   }
 
   /* (non-Javadoc)
@@ -192,6 +284,8 @@ public class DefaultStateBuilder implements IStateBuilder
   private static Log log = Log.getLog( DefaultStateBuilder.class);
   
   private Map<LR1ItemSet, State> states;
-  private Map<LR1Event, Integer> branched;
+  private Map<State, LR1ItemSet> itemSets;
+  private Set<LR1Event> branches;
   private int counter;
+  private State start;
 }

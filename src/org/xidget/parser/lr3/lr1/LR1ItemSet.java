@@ -86,7 +86,6 @@ public class LR1ItemSet
       }
       
       successor.kernel.add( itemPlus);
-      
     }
   }
   

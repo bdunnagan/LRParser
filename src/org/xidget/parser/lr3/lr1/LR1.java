@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.xidget.parser.lr3.Grammar;
 import org.xidget.parser.lr3.Rule;
 import org.xmodel.log.Log;
@@ -189,7 +190,9 @@ public class LR1
       int count = findOverlappingExtent( tOps, i);
       if ( count > 1)
       {
-        builder.handleTerminalConflicts( grammar, itemSet, tOps.subList( i, i + count));
+        List<LR1Event> tConflicts = tOps.subList( i, i + count);
+        logTerminalConflicts( grammar, itemSet, tConflicts);
+        builder.handleTerminalConflicts( grammar, itemSet, tConflicts);
         conflicts++;
       }
       i += count;
@@ -219,10 +222,88 @@ public class LR1
     for( int i=index+1; i<ops.size(); i++)
     {
       int[] symbols = ops.get( i).symbols;
-      if ( symbols[ 0] > op.symbols[ 1])
+      if ( symbols[ 0] > op.symbols[ op.symbols.length - 1])
         return i - index;
     }
     return 1;
+  }
+  
+  /**
+   * Format and log the specified terminal conflicts.
+   * @param grammar The grammar.
+   * @param tConflicts The list of conflicting terminal operations.
+   */
+  private void logTerminalConflicts( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> tConflicts)
+  {
+    StringBuilder sb = new StringBuilder();
+    sb.append( "Rule: ");
+    sb.append( itemSet.items.iterator().next()); 
+    sb.append( '\n');
+    
+    for( LR1Event tOp: tConflicts)
+    {
+      String symbol = "";
+      char c0 = (char)tOp.symbols[ 0];
+      if ( tOp.symbols.length == 1)
+      {
+        symbol = (c0 == '\'')? "[']": String.format( "'%c'       ", c0);
+      }
+      else
+      {
+        char c1 = (char)tOp.symbols[ 1];
+        symbol = String.format( "[%c-%c]     ", c0, c1);
+      }
+      
+      if ( tOp.item != null)
+      {
+        sb.append( symbol);
+        sb.append( tOp.item); 
+        sb.append( '\n');
+      }
+      else
+      {
+        for( LR1Item item: findMatchingItems( grammar, tOp.itemSet, tOp.symbols[ 0]))
+        {
+          sb.append( symbol);
+          sb.append( item); 
+          sb.append( '\n');
+        }
+      }
+    }
+    
+    log.debugf( "Terminal conflicts:\n%s", sb);
+  }
+  
+  /**
+   * Find all items in the specified set with a dot before the specified symbol.
+   * @param grammar The grammar.
+   * @param itemSet The item set.
+   * @param symbol The symbol.
+   * @return Returns the list of matching items.
+   */
+  private List<LR1Item> findMatchingItems( Grammar grammar, LR1ItemSet itemSet, int symbol)
+  {
+    List<LR1Item> items = new ArrayList<LR1Item>();
+    for( LR1Item item: itemSet.items)
+    {
+      if ( !grammar.isTerminal( item.symbol())) continue;
+      
+      for( String la: item.laList)
+      {
+        int[] symbols = grammar.toTerminal( la);
+        if ( symbols.length == 1)
+        {
+          if ( symbol == symbols[ 0])
+            items.add( item);
+        }
+        else
+        {
+          if ( symbols[ 0] <= symbol && symbol <= symbols[ 1])
+            items.add( item);
+        }
+      }
+    }
+    return items;
   }
   
   public final static Log log = Log.getLog( LR1.class);

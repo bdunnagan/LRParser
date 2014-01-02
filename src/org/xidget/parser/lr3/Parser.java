@@ -5,31 +5,30 @@ import java.io.Reader;
 import java.util.Arrays;
 
 import org.xidget.parser.lr3.Rule.IHandler;
-import org.xidget.parser.lr3.lr1.LR1;
+import org.xidget.parser.lr3.lr1.DefaultStateBuilder;
 import org.xidget.parser.lr3.lr1.LR1ItemSet;
 
 public class Parser implements IHandler
 {
   /**
    * Create a Parser with the specified table generator and start state.
-   * @param lr The table generator (for error reporting).
+   * @param builder The parser generator. 
    * @param start The start state.
    */
-  public Parser( LR1 lr, State start)
+  public Parser( DefaultStateBuilder builder, State start)
   {
-    this( lr, start, 1024);
+    this( builder, start, 1024);
   }
-  
+
   /**
    * Create a Parser with the specified table generator, start state and buffer size.
-   * @param lr The table generator (for error reporting).
    * @param start The start state.
    * @param bufferSize The initial buffer size.
    */
-  public Parser( LR1 lr, State start, int bufferSize)
+  public Parser( DefaultStateBuilder builder, State start, int bufferSize)
   {
-    this.lr = lr;
     this.start = start;
+    this.builder = builder;
     buffer = new char[ bufferSize];
   }
 
@@ -41,11 +40,11 @@ public class Parser implements IHandler
   public boolean parse( Reader reader) throws IOException
   {
     dfa = new DFA( start);
-    
+
     int preserve = 0;
     int read = 0;
     int removed = 0;
-    
+
     while( true)
     {
       read = reader.read( buffer, preserve, buffer.length - preserve);
@@ -58,7 +57,7 @@ public class Parser implements IHandler
       int consumed = dfa.parse( this, buffer, 0, read + preserve, removed);
       if ( consumed == -1) return false;
       if ( consumed == -2) return true;
-      
+
       preserve += read - consumed;
       if ( preserve == buffer.length) 
       {
@@ -77,11 +76,11 @@ public class Parser implements IHandler
    */
   public void dumpState()
   {
-	System.out.println( "---------------------------------------------");
-	System.out.println( lr.itemSet( dfa.getState()));
-	System.out.println( "---------------------------------------------");
+    System.out.println( "---------------------------------------------");
+    System.out.println( builder.getItemSet( dfa.getState()));
+    System.out.println( "---------------------------------------------");
   }
-  
+
   /**
    * Returns the item-set for the specified state.
    * @param state The state.
@@ -89,9 +88,8 @@ public class Parser implements IHandler
    */
   public LR1ItemSet itemSet( State state)
   {
-	return lr.itemSet( state);
+    return builder.getItemSet( state);
   }
-  
 
   /* (non-Javadoc)
    * @see org.xidget.parser.lr3.Rule.IHandler#onProduction(org.xidget.parser.lr3.Parser, org.xidget.parser.lr3.Rule, char[], int, int)
@@ -113,31 +111,31 @@ public class Parser implements IHandler
     System.out.printf( "%s Parsing error at offset %d: \n", dfa, index);
     dumpState();
 
-//    int s = index;
-//    for( ; s >= 0 && buffer[ s] != '\n'; s--);
-//    
-//    int e = index;
-//    for( ; e < buffer.length && buffer[ e] != '\n'; e++);
-//    
-//    s++;
-//    System.out.printf( "%s\n", new String( buffer, s, e-s));
-//    char[] indent = new char[ index - s]; Arrays.fill( indent, ' ');
-//    System.out.printf( "%s^\n", new String( indent));
-//    
-//    System.out.printf( "Stack: \n");
-//    for( int i=sindex; i>=0; i--)
-//    {
-//      List<LR1Item> items = new ArrayList<LR1Item>( lr.itemSet( stack[ i]).kernel);
-//      System.out.printf( "%4d. %s\n", i, items.get( 0));
-//      for( int j=1; j<items.size(); j++)
-//      {
-//        System.out.printf( "      %s\n", items.get( j));
-//      }
-//      System.out.println();
-//    }
+    //    int s = index;
+    //    for( ; s >= 0 && buffer[ s] != '\n'; s--);
+    //    
+    //    int e = index;
+    //    for( ; e < buffer.length && buffer[ e] != '\n'; e++);
+    //    
+    //    s++;
+    //    System.out.printf( "%s\n", new String( buffer, s, e-s));
+    //    char[] indent = new char[ index - s]; Arrays.fill( indent, ' ');
+    //    System.out.printf( "%s^\n", new String( indent));
+    //    
+    //    System.out.printf( "Stack: \n");
+    //    for( int i=sindex; i>=0; i--)
+    //    {
+    //      List<LR1Item> items = new ArrayList<LR1Item>( lr.itemSet( stack[ i]).kernel);
+    //      System.out.printf( "%4d. %s\n", i, items.get( 0));
+    //      for( int j=1; j<items.size(); j++)
+    //      {
+    //        System.out.printf( "      %s\n", items.get( j));
+    //      }
+    //      System.out.println();
+    //    }
   }
-    
-  private LR1 lr;
+
+  private DefaultStateBuilder builder;
   private State start;
   private DFA dfa;
   private char[] buffer;

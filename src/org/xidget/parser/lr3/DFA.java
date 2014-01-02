@@ -1,6 +1,7 @@
 package org.xidget.parser.lr3;
 
 import java.util.Arrays;
+
 import org.xidget.parser.lr3.State.StackOp;
 
 /**
