@@ -19,7 +19,7 @@ public interface IStateBuilder
   public void createState( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> tOps, List<LR1Event> ntOps);
   
   /**
-   * Create a new parser state.
+   * Handle conflicts between terminal ops.
    * @param grammar The grammar.
    * @param itemSet The LR1 item set representing the state.
    * @param tOps One group of terminal state operations that conflict.
@@ -27,10 +27,18 @@ public interface IStateBuilder
   public void handleTerminalConflicts( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> tOps);
   
   /**
-   * Create a new parser state.
+   * Handle conflicts between non-terminal ops.
    * @param grammar The grammar.
    * @param itemSet The LR1 item set representing the state.
    * @param ntOps One group of non-terminal state operations that conflict.
    */
   public void handleNonTerminalConflicts( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> ntOps);
+  
+  /**
+   * Handle conflicts between terminal and non-terminal ops.
+   * @param grammar The grammar.
+   * @param itemSet The LR1 item set representing the state.
+   * @param ops One group of state operations that conflict.
+   */
+  public void handleOtherConflicts( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> ops);
 }

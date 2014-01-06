@@ -1,5 +1,7 @@
 package org.xidget.parser.lr3.lr1;
 
+import org.xidget.parser.lr3.Grammar;
+
 public class LR1Event implements Comparable<LR1Event>
 {
   public enum Type { tshift, ntshift, reduce, accept};
@@ -96,48 +98,48 @@ public class LR1Event implements Comparable<LR1Event>
   /* (non-Javadoc)
    * @see java.lang.Object#toString()
    */
-//  @Override
-//  public String toString()
-//  {
-//    String string = "";
-//    
-//    if ( symbols.length == 1)
-//    {
-//      if ( type == Action.Type.ntshift)
-//      {
-//        string = String.format( "%d", symbols[ 0]);
-//      }
-//      else
-//      {
-//        if ( symbols[ 0] == Grammar.epsilonChar) string = Grammar.epsilon;
-//        else if ( symbols[ 0] > 32) string = String.format( "[%c]", (char)symbols[ 0]);
-//        else string = String.format( "#%02X", symbols[ 0]);
-//      }
-//    }
-//    else
-//    {
-//      if ( type == Action.Type.ntshift)
-//      {
-//        string = String.format( "[%d,%d]", symbols[ 0], symbols[ 1]);
-//      }
-//      else
-//      {
-//        string = ( symbols[ 0] > 32)? 
-//            String.format( "[%c-%c]", (char)symbols[ 0], (char)symbols[ 1]): 
-//            String.format( "[%02X-%02X]", symbols[ 0], symbols[ 1]);
-//      }
-//    }
-//    
-//    switch( type)
-//    { 
-//      case tshift:  return String.format( "Shift  %s S%d %s", string, itemSet.state.index, itemSet.items.iterator().next());
-//      case reduce:  return String.format( "Reduce %s %s", string, item);
-//      case accept:  return String.format( "Accept %s", string);
-//      case ntshift: return String.format( "Goto   %s S%d %s", string, itemSet.state.index, itemSet.items.iterator().next());
-//    }
-//    
-//    return null;
-//  }
+  @Override
+  public String toString()
+  {
+    String string = "";
+    
+    if ( symbols.length == 1)
+    {
+      if ( type == LR1Event.Type.ntshift)
+      {
+        string = String.format( "%d", symbols[ 0]);
+      }
+      else
+      {
+        if ( symbols[ 0] == Grammar.epsilonChar) string = Grammar.epsilon;
+        else if ( symbols[ 0] > 32) string = String.format( "[%c]", (char)symbols[ 0]);
+        else string = String.format( "#%02X", symbols[ 0]);
+      }
+    }
+    else
+    {
+      if ( type == LR1Event.Type.ntshift)
+      {
+        string = String.format( "[%d,%d]", symbols[ 0], symbols[ 1]);
+      }
+      else
+      {
+        string = ( symbols[ 0] > 32)? 
+            String.format( "[%c-%c]", (char)symbols[ 0], (char)symbols[ 1]): 
+            String.format( "[%02X-%02X]", symbols[ 0], symbols[ 1]);
+      }
+    }
+    
+    switch( type)
+    { 
+      case tshift:  return String.format( "Shift  %s %s", string, itemSet.items.iterator().next());
+      case reduce:  return String.format( "Reduce %s %s", string, item);
+      case accept:  return String.format( "Accept %s", string);
+      case ntshift: return String.format( "Goto   %s %s", string, itemSet.items.iterator().next());
+    }
+    
+    return null;
+  }
 
   public Type type;
   public int[] symbols;

@@ -12,13 +12,13 @@ public class Grammar
 {
   public final static String epsilon = "ø";
   public final static char epsilonChar = epsilon.charAt( 0);
-  
+
   public final static String terminus = "¬";
   public final static char terminusChar = terminus.charAt( 0);
-  
+
   public final static String augment = "Å";
   public final static char augmentChar = augment.charAt( 0);
-  
+
   public Grammar()
   {
     this.rules = new ArrayList<Rule>();
@@ -34,7 +34,7 @@ public class Grammar
     if ( !map.containsKey( name)) 
       throw new IllegalArgumentException( 
           String.format( "Rule %s not defined.", name));
-    
+
     start = map.get( name).get( 0);
   }
 
@@ -44,9 +44,9 @@ public class Grammar
    */
   public void setPriority( int priority)
   {
-	this.priority = priority;
+    this.priority = priority;
   }
-  
+
   /**
    * Add a rule to the grammar.
    * @param rule The rule.
@@ -58,17 +58,17 @@ public class Grammar
 
     if ( rule.rhs().size() == 0)
       rule.rhs().add( Grammar.epsilon);
-    
+
     List<Rule> lhs = map.get( rule.name());
     if ( lhs == null) 
     {
       lhs = new ArrayList<Rule>();
       map.put( rule.name(), lhs);
     }
-    
+
     lhs.add( rule);
   }
-  
+
   /**
    * Create and add a new rule with the specified name.
    * @param name The name.
@@ -78,7 +78,7 @@ public class Grammar
   {
     return rule( null, name);
   }
-  
+
   /**
    * Create and add a new rule with the specified name.
    * @param handler Null or the production handler for the rule.
@@ -92,7 +92,7 @@ public class Grammar
     rule( rule);
     return rule;
   }
-  
+
   /**
    * Create and add a new rule with the specified name and rhs.
    * @param name The name.
@@ -103,7 +103,7 @@ public class Grammar
   {
     return rule( null, name, rhs);
   }
-  
+
   /**
    * Create and add a new rule with the specified name and rhs.
    * @param handler Null or the production handler for the rule.
@@ -118,39 +118,39 @@ public class Grammar
     rule( rule);
     return rule;
   }
-  
-  /**
-   * Create and add a new rule with the specified name and rhs.
-   * @param name The name.
-   * @param rhs The right-hand side of the rule.
-   * @return Returns the new rule.
-   */
-  public Rule rule( String name, char... rhs)
-  {
-    return rule( null, name, rhs);
-  }
-  
-  /**
-   * Create and add a new rule with the specified name and rhs.
-   * @param handler Null or the production handler for the rule.
-   * @param name The name.
-   * @param rhs The right-hand side of the rule.
-   * @return Returns the new rule.
-   */
-  public Rule rule( IHandler handler, String name, char... rhs)
-  {
-	String[] terminals = new String[ rhs.length];
-	for( int i=0; i<rhs.length; i++)
-	{
-	  terminals[ i] = String.format( "#%02X", (int)rhs[ i]);
-	  
-	}
-    Rule rule = new Rule( name, terminals).setPriority( priority);
-    rule.handler = handler;
-    rule( rule);
-    return rule;
-  }
-  
+
+//  /**
+//   * Create and add a new rule with the specified name and rhs.
+//   * @param name The name.
+//   * @param rhs The right-hand side of the rule.
+//   * @return Returns the new rule.
+//   */
+//  public Rule rule( String name, char... rhs)
+//  {
+//    return rule( null, name, rhs);
+//  }
+//
+//  /**
+//   * Create and add a new rule with the specified name and rhs.
+//   * @param handler Null or the production handler for the rule.
+//   * @param name The name.
+//   * @param rhs The right-hand side of the rule.
+//   * @return Returns the new rule.
+//   */
+//  public Rule rule( IHandler handler, String name, char... rhs)
+//  {
+//    String[] terminals = new String[ rhs.length];
+//    for( int i=0; i<rhs.length; i++)
+//    {
+//      terminals[ i] = String.format( "#%02X", (int)rhs[ i]);
+//
+//    }
+//    Rule rule = new Rule( name, terminals).setPriority( priority);
+//    rule.handler = handler;
+//    rule( rule);
+//    return rule;
+//  }
+
   /**
    * Augment the grammar with the start rule.
    */
@@ -158,14 +158,14 @@ public class Grammar
   {
     if ( augmented) return;
     augmented = true;
-    
+
     Rule newStart = new Rule( augment);
     newStart.add( start.name());
     rules.add( 0, newStart);
     start = newStart;
-    
+
     map.put( newStart.name(), Collections.<Rule>singletonList( newStart));
-    
+
     //
     // Finalize the rules of the grammar.
     //
@@ -177,7 +177,7 @@ public class Grammar
       rule.expandTokens( this);
     }
   }
-  
+
   /**
    * @return Returns the rules in the grammar.
    */
@@ -185,7 +185,7 @@ public class Grammar
   {
     return Collections.unmodifiableList( rules);
   }
-  
+
   /**
    * Returns the declarations with the specified left-hand-side name.
    * @param name The left-hand-side name.
@@ -197,7 +197,7 @@ public class Grammar
     if ( lhs != null) return lhs;
     return Collections.emptyList();
   }
-  
+
   /**
    * @return Returns the non-terminals in the grammar.
    */
@@ -205,7 +205,7 @@ public class Grammar
   {
     return map.keySet();
   }
-  
+
   /**
    * Returns true if the specified rule is an empty production.
    * @param rule The rule.
@@ -215,7 +215,7 @@ public class Grammar
   {
     return rule.rhs().size() == 1 && rule.rhs().get( 0).equals( Grammar.epsilon);
   }
-  
+
   /**
    * Returns true if the specified symbol is a terminal.
    * @param name The symbol.
@@ -224,6 +224,15 @@ public class Grammar
   public boolean isTerminal( String name)
   {
     return map.get( name) == null;
+  }
+  
+  /**
+   * @return Returns true if the specified character is reserved.
+   * @param c The character.
+   */
+  public static boolean isReserved( char c)
+  {
+    return c == '[' || c == '#';
   }
 
   /**
@@ -234,7 +243,7 @@ public class Grammar
     if ( graph == null) graph = new Graph( this);
     return graph;
   }
-  
+
   /**
    * Dispose of the graph for this grammar.
    */
@@ -242,7 +251,7 @@ public class Grammar
   {
     graph = null;
   }
-  
+
   /**
    * Convert the specified symbol string into a terminal range. All terminal symbols may represent either
    * a single terminal or a range of terminals using the syntax [a,b]. Hexadecimal character values may be 
@@ -254,7 +263,7 @@ public class Grammar
   public int[] toTerminal( String symbol)
   {
     if ( symbol == null || symbol.equals( Grammar.epsilon)) return new int[] { Grammar.epsilonChar};
-    
+
     if ( symbol.charAt( 0) == '[')
     {
       if ( symbol.length() < 2) 
@@ -262,7 +271,7 @@ public class Grammar
         String message = String.format( "Incomplete symbol range specification, %s.", symbol);
         throw new BuildException( message);
       }
-      
+
       String trimmed = symbol.substring( 1, symbol.length() - 1);
       String[] parts = trimmed.split( "\\s*[,-]\\s*");
       parts[ 0] = parts[ 0].trim();
@@ -283,7 +292,7 @@ public class Grammar
               String message = String.format( "Too many characters in symbol range specification, %s.", symbol);
               throw new BuildException( message);
             }
-            
+
             range[ i] = parts[ i].charAt( 0); 
           }
         }
@@ -298,7 +307,7 @@ public class Grammar
     else
     {
       int[] terminal = new int[ 1];
-      
+
       if ( symbol.startsWith( "#"))
       {
         terminal[ 0] = Integer.parseInt( symbol.substring( 1), 16);
@@ -309,12 +318,12 @@ public class Grammar
         String message = String.format( "Unrecognized symbol, %s.", symbol);
         throw new BuildException( message);
       }
-      
+
       terminal[ 0] = symbol.charAt( 0);
       return terminal;
     }
   }
-  
+
   /* (non-Javadoc)
    * @see java.lang.Object#toString()
    */

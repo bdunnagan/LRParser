@@ -1,13 +1,12 @@
 package org.xidget.parser.lr3.lr1;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import org.xidget.parser.lr3.Grammar;
 import org.xidget.parser.lr3.Parser;
 import org.xidget.parser.lr3.State;
@@ -49,69 +48,34 @@ public class DefaultStateBuilder implements IStateBuilder
   public void createState( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> tOps, List<LR1Event> ntOps)
   {
     State state = getCreateState( itemSet);
-    if ( state.stackOps == null) createSymbolTable( grammar, state, tOps, ntOps);
     
     if ( branches.size() > 0)
     {
       state.branches = new State[ branches.size()];
       state.stackOps = null;
       
-      List<LR1Event> btOps = new ArrayList<LR1Event>( tOps);
-      btOps.removeAll( branches);
-      btOps.add( branches);
-      
-      for( State branch: state.branches)
+      int i=0;
+      for( LR1Event tOp: branches)
       {
+        List<LR1Event> btOps = new ArrayList<LR1Event>( tOps);
+        btOps.removeAll( branches);
+        btOps.add( tOp);
+
+        State branch = new State();
+        state.index = ++counter;
+        itemSets.put( branch, itemSet);
+        state.branches[ i++] = branch;
+        
+        createSymbolTable( grammar, branch, btOps, ntOps);
+        createStackOps( grammar, branch, btOps, ntOps);
       }
+      
+      branches.clear();
     }
     else
     {
+      if ( state.stackOps == null) createSymbolTable( grammar, state, tOps, ntOps);
       createStackOps( grammar, state, tOps, ntOps);
-    }
-    
-    
-    // terminals
-    for( int i=0; i<tOps.size(); i++)
-    {
-      LR1Event tOp = tOps.get( i);
-      StackOp stackOp = state.stackOps[ i];
-      
-      switch( tOp.type)
-      {
-        case tshift: stackOp.next = getCreateState( tOp.itemSet); break;
-        case reduce: stackOp.reduce = tOp.item.rule; break;
-        case accept: stackOp.next = null; break;
-        case ntshift: throw new IllegalStateException();
-      }
-      
-      stackOp.next = getCreateState( tOp.itemSet);
-      if ( branched.containsKey( tOp)) branched.put( tOp, i);
-    }
-    
-    // non-terminals
-    state.gotos = new State[ grammar.rules().size()];
-    for( int i=0; i<ntOps.size(); i++)
-    {
-      LR1Event ntOp = ntOps.get( i);
-      State target = getCreateState( ntOp.itemSet);
-      if ( target == null) throw new IllegalStateException();
-      state.gotos[ ntOp.symbols[ 0]] = target;
-    }
-    
-    // branches
-    if ( branched.size() > 0)
-    {
-      state.branches = new State[ branched.size()];
-      int i=0;
-      for( Map.Entry<LR1Event, Integer> entry: branched.entrySet())
-      {
-        State newState = copy( state);
-        newState.stackOps[ entry.getValue()] = null;
-        state.branches[ i++] = newState;
-      }
-      branched.clear();
-      
-      state.stackOps = null;
     }
   }
   
@@ -131,7 +95,8 @@ public class DefaultStateBuilder implements IStateBuilder
         case ntshift: throw new IllegalStateException();
       }
       
-      stackOp.next = getCreateState( tOp.itemSet);
+      if ( tOp.type != Type.accept)
+        stackOp.next = getCreateState( tOp.itemSet);
     }
     
     // non-terminals
@@ -160,31 +125,81 @@ public class DefaultStateBuilder implements IStateBuilder
     return state;
   }
   
+  /**
+   * Create the symbol table for the specified state.
+   * @param grammar The grammar.
+   * @param state The state.
+   * @param tOps The state changes triggered by terminals.
+   * @param ntOps The state changes triggered by non-terminals.
+   */
+  private void createSymbolTable( Grammar grammar, State state, List<LR1Event> tOps, List<LR1Event> ntOps)
+  {
+    state.stackOps = new StackOp[ tOps.size()];
+    for( int i=0; i<state.stackOps.length; i++)
+    {
+      StackOp stackOp = new StackOp();
+      state.stackOps[ i] = stackOp;
+      
+      int[] symbol = tOps.get( i).symbols;
+      if ( symbol.length == 2)
+      {
+        stackOp.low = symbol[ 0];
+        stackOp.high = symbol[ 1];
+      }
+      else if ( symbol.length == 1)
+      {
+        stackOp.low = symbol[ 0];
+        stackOp.high = symbol[ 0];
+      }
+    }
+  }
+
   /* (non-Javadoc)
    * @see org.xidget.parser.lr3.lr1.IStateBuilder#handleTerminalConflicts(org.xidget.parser.lr3.Grammar, org.xidget.parser.lr3.lr1.LR1ItemSet, java.util.List)
    */
   @Override
   public void handleTerminalConflicts( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> tOps)
   {
-    //
-    // Rule 1: If there is at least one shift, then ignore reductions.
-    // (Type.reduce follows Type.tshift)
-    //
-    if ( tOps.get( 0).type == Type.tshift)
-    {
-      resolveTerminalShiftConflicts( grammar, itemSet, tOps);
-      return;
-    }
+    resolveTerminalConflicts( grammar, itemSet, tOps);
     
-    //
-    // Rule 2: Resolve reduction conflicts by choosing the rule that comes first in the grammar.
-    //
-    if ( tOps.get( 0).type == Type.reduce)
-    {
-      resolveTerminalReduceConflicts( grammar, itemSet, tOps);
-      return;
-    }
+//    //
+//    // Rule 1: If there is at least one shift, then ignore reductions.
+//    // (Type.reduce follows Type.tshift)
+//    //
+//    if ( tOps.get( 0).type == Type.tshift)
+//    {
+//      resolveTerminalConflicts( grammar, itemSet, tOps);
+//      return;
+//    }
+//    
+//    //
+//    // Rule 2: Resolve reduction conflicts by choosing the rule that comes first in the grammar.
+//    //
+//    if ( tOps.get( 0).type == Type.reduce)
+//    {
+//      resolveTerminalReduceConflicts( grammar, itemSet, tOps);
+//      return;
+//    }
   }
+  
+//  /**
+//   * Remove ops of the specified type.
+//   * @param type The type.
+//   * @param ops The ops.
+//   */
+//  private void filterOps( LR1Event.Type type, List<LR1Event> ops)
+//  {
+//    Iterator<LR1Event> iter = ops.iterator();
+//    while( iter.hasNext())
+//    {
+//      LR1Event tOp = iter.next();
+//      if ( tOp.type == type)
+//      {
+//        log.warnf( "Ignoring reduction: %s", tOp);
+//        iter.remove();
+//      }
+//    }
+//  }
   
   /**
    * Resolve terminal shift conflicts (and ignore reductions).
@@ -192,10 +207,10 @@ public class DefaultStateBuilder implements IStateBuilder
    * @param itemSet The item set.
    * @param tOps The terminal operations.
    */
-  private void resolveTerminalShiftConflicts( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> tOps)
+  private void resolveTerminalConflicts( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> tOps)
   {
-    for( LR1Event tOp: tOps)
-      branches.add( tOp);
+    if ( tOps.size() > 1)
+      branches.addAll( tOps);
   }
 
   /**
@@ -238,49 +253,14 @@ public class DefaultStateBuilder implements IStateBuilder
     log.warnf( "The following rules conflict:\n%s", sb);
   }
   
-  /**
-   * Create the symbol table for the specified state.
-   * @param grammar The grammar.
-   * @param state The state.
-   * @param tOps The state changes triggered by terminals.
-   * @param ntOps The state changes triggered by non-terminals.
+  /* (non-Javadoc)
+   * @see org.xidget.parser.lr3.lr1.IStateBuilder#handleOtherConflicts(org.xidget.parser.lr3.Grammar, org.xidget.parser.lr3.lr1.LR1ItemSet, java.util.List)
    */
-  private void createSymbolTable( Grammar grammar, State state, List<LR1Event> tOps, List<LR1Event> ntOps)
+  @Override
+  public void handleOtherConflicts( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> ops)
   {
-    state.stackOps = new StackOp[ tOps.size()];
-    for( int i=0; i<state.stackOps.length; i++)
-    {
-      StackOp stackOp = new StackOp();
-      state.stackOps[ i] = stackOp;
-      
-      int[] symbol = tOps.get( i).symbols;
-      if ( symbol.length == 2)
-      {
-        stackOp.low = symbol[ 0];
-        stackOp.high = symbol[ 1];
-      }
-      else if ( symbol.length == 1)
-      {
-        stackOp.low = symbol[ 0];
-        stackOp.high = symbol[ 0];
-      }
-    }
   }
-  
-  /**
-   * Create a copy of the specified state.
-   * @param state The state.
-   * @return Returns the copy.
-   */
-  private final State copy( State state)
-  {
-    State copy = new State();
-    copy.index = counter++;
-    copy.stackOps = Arrays.copyOf( state.stackOps, state.stackOps.length);
-    copy.gotos = Arrays.copyOf( state.gotos, state.gotos.length);
-    return copy;
-  }    
-  
+
   private static Log log = Log.getLog( DefaultStateBuilder.class);
   
   private Map<LR1ItemSet, State> states;

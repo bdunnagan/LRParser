@@ -4,10 +4,10 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.util.Arrays;
-
 import org.xidget.parser.lr3.Rule.IHandler;
 import org.xidget.parser.lr3.lr1.DefaultStateBuilder;
 import org.xidget.parser.lr3.lr1.LR1;
+import org.xmodel.log.ConsoleSink;
 import org.xmodel.log.Log;
 
 public class XPath
@@ -67,7 +67,7 @@ public class XPath
 
     // Relative Path
     g.rule( "RelativePath", "Step");
-    g.rule( "RelativePath", "Step", "PredicateList");
+//    g.rule( "RelativePath", "Step", "PredicateList");
     g.rule( "RelativePath", "RelativePath", "ChildStep");
     g.rule( "RelativePath", "RelativePath", "DescendantStep");
 
@@ -86,7 +86,7 @@ public class XPath
     g.rule( handler, "Step", "QName");
     g.rule( handler, "Step", "QName", "PredicateList");
     g.rule( handler, "Step", ".");
-    g.rule( handler, "Step", ".", ".");
+    g.rule( handler, "Step", "'..'");
 
     // Node Test
     g.rule( handler, "NodeTest", "QName");
@@ -97,10 +97,10 @@ public class XPath
     g.rule( handler, "NodeTest", "NodeType", "(", "single-quoted", ")");
 
     // NodeType
-    g.rule( handler, "NodeType", "comment".toCharArray());
-    g.rule( handler, "NodeType", "text".toCharArray());
-    g.rule( handler, "NodeType", "processing-instruction".toCharArray());
-    g.rule( handler, "NodeType", "node".toCharArray());
+    g.rule( handler, "NodeType", "'comment'");
+    g.rule( handler, "NodeType", "'text'");
+    g.rule( handler, "NodeType", "'processing-instruction'");
+    g.rule( handler, "NodeType", "'node'");
 
     // Name Test
     g.rule( handler, "NameTest", "NCName", ":", "*");
@@ -111,19 +111,19 @@ public class XPath
     g.rule( handler, "AxisSpecifier", "@");
 
     // axis name
-    g.rule( handler, "AxisName", "ancestor".toCharArray());
-    g.rule( handler, "AxisName", "ancestor-or-self".toCharArray());
-    g.rule( handler, "AxisName", "attribute".toCharArray());
-    g.rule( handler, "AxisName", "child".toCharArray());
-    g.rule( handler, "AxisName", "descendant".toCharArray());
-    g.rule( handler, "AxisName", "descendant-or-self".toCharArray());
-    g.rule( handler, "AxisName", "following".toCharArray());
-    g.rule( handler, "AxisName", "following-sibling".toCharArray());
-    g.rule( handler, "AxisName", "namespace".toCharArray());
-    g.rule( handler, "AxisName", "parent".toCharArray());
-    g.rule( handler, "AxisName", "preceding".toCharArray());
-    g.rule( handler, "AxisName", "preceding-sibling".toCharArray());
-    g.rule( handler, "AxisName", "self".toCharArray());
+    g.rule( handler, "AxisName", "'ancestor'");
+    g.rule( handler, "AxisName", "'ancestor-or-self'");
+    g.rule( handler, "AxisName", "'attribute'");
+    g.rule( handler, "AxisName", "'child'");
+    g.rule( handler, "AxisName", "'descendant'");
+    g.rule( handler, "AxisName", "'descendant-or-self'");
+    g.rule( handler, "AxisName", "'following'");
+    g.rule( handler, "AxisName", "'following-sibling'");
+    g.rule( handler, "AxisName", "'namespace'");
+    g.rule( handler, "AxisName", "'parent'");
+    g.rule( handler, "AxisName", "'preceding'");
+    g.rule( handler, "AxisName", "'preceding-sibling'");
+    g.rule( handler, "AxisName", "'self'");
   }
 
   /**
@@ -198,6 +198,7 @@ public class XPath
 
   public static void main( String[] args) throws Exception
   {
+    Log.setDefaultSink( new ConsoleSink());
     LR1.log.setLevel( Log.all);
 
     IHandler handler = new IHandler() {

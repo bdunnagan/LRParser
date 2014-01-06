@@ -3,12 +3,11 @@ package org.xidget.parser.lr3.lr1;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import org.xidget.parser.lr3.Grammar;
 import org.xidget.parser.lr3.Rule;
 import org.xmodel.log.Log;
@@ -99,10 +98,14 @@ public class LR1
    */
   private void createStates( Grammar grammar, Collection<LR1ItemSet> itemSets, IStateBuilder builder)
   {
+    int count = 1;
     for( LR1ItemSet itemSet: itemSets)
     {
-      Set<String> tSet = new HashSet<String>();
-      Set<String> ntSet = new HashSet<String>();
+      log.verbose( seperator);
+      log.verbosef( "#%d: %s\n", count++, itemSet);
+      
+      Set<String> tSet = new LinkedHashSet<String>();
+      Set<String> ntSet = new LinkedHashSet<String>();
       
       List<LR1Event> tOps = new ArrayList<LR1Event>();
       List<LR1Event> ntOps = new ArrayList<LR1Event>();
@@ -170,6 +173,10 @@ public class LR1
       Collections.sort( tOps);
       Collections.sort( ntOps);
       
+      for( LR1Event tOp: tOps) log.verbose( tOp);
+      for( LR1Event ntOp: ntOps) log.verbose( ntOp);
+      log.verbose( "");
+      
       handleConflicts( grammar, itemSet, tOps, ntOps, builder);
       builder.createState( grammar, itemSet, tOps, ntOps);
     }    
@@ -190,10 +197,14 @@ public class LR1
       int count = findOverlappingExtent( tOps, i);
       if ( count > 1)
       {
-        List<LR1Event> tConflicts = tOps.subList( i, i + count);
-        logTerminalConflicts( grammar, itemSet, tConflicts);
-        builder.handleTerminalConflicts( grammar, itemSet, tConflicts);
-        conflicts++;
+        List<LR1Event> ops = tOps.subList( i, i + count);
+        removeRedundantItems( ops);
+        if ( ops.size() > 1)
+        {
+          logConflicts( grammar, itemSet, ops);
+          builder.handleTerminalConflicts( grammar, itemSet, ops);
+          conflicts++;
+        }
       }
       i += count;
     }
@@ -203,11 +214,37 @@ public class LR1
       int count = findOverlappingExtent( ntOps, i);
       if ( count > 1)
       {
-        builder.handleNonTerminalConflicts( grammar, itemSet, ntOps.subList( i, i + count));
-        conflicts++;
+        List<LR1Event> ops = ntOps.subList( i, i + count);
+        removeRedundantItems( ops);
+        if ( ops.size() > 1)
+        {
+          logConflicts( grammar, itemSet, ops);
+          builder.handleNonTerminalConflicts( grammar, itemSet, ops);
+          conflicts++;
+        }
       }
       i += count;    
     }
+    
+    List<LR1Event> allOps = new ArrayList<LR1Event>();
+    allOps.addAll( tOps);
+    allOps.addAll( ntOps);
+    for( int i=0; i<allOps.size(); )
+    {
+      int count = findOverlappingExtent( allOps, i);
+      if ( count > 1)
+      {
+        List<LR1Event> ops = allOps.subList( i, i + count);
+        removeRedundantItems( ops);
+        if ( ops.size() > 1)
+        {
+          logConflicts( grammar, itemSet, ops);
+          builder.handleOtherConflicts( grammar, itemSet, ops);
+          conflicts++;
+        }
+      }
+      i += count;    
+    }    
   }
     
   /**
@@ -229,19 +266,31 @@ public class LR1
   }
   
   /**
-   * Format and log the specified terminal conflicts.
+   * Format and log the specified stack operation conflicts.
    * @param grammar The grammar.
-   * @param tConflicts The list of conflicting terminal operations.
+   * @param conflicts The list of conflicting operations.
    */
-  private void logTerminalConflicts( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> tConflicts)
+  private void logConflicts( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> conflicts)
   {
     StringBuilder sb = new StringBuilder();
-    sb.append( "Rule: ");
-    sb.append( itemSet.items.iterator().next()); 
-    sb.append( '\n');
-    
-    for( LR1Event tOp: tConflicts)
+    sb.append( "Conflicts -------------------------------\n");
+    if ( !log.verbose())
     {
+      sb.append( itemSet); 
+      sb.append( '\n');
+    }
+    
+    for( LR1Event tOp: conflicts)
+    {
+      StringBuilder detail = new StringBuilder();
+      switch( tOp.type)
+      {
+        case accept:  detail.append( "ACCEPT "); break;
+        case ntshift: detail.append( "GOTO   "); break;
+        case reduce:  detail.append( "REDUCE "); break;
+        case tshift:  detail.append( "SHIFT  "); break;
+      }
+      
       String symbol = "";
       char c0 = (char)tOp.symbols[ 0];
       if ( tOp.symbols.length == 1)
@@ -256,6 +305,7 @@ public class LR1
       
       if ( tOp.item != null)
       {
+        sb.append( detail);
         sb.append( symbol);
         sb.append( tOp.item); 
         sb.append( '\n');
@@ -264,6 +314,7 @@ public class LR1
       {
         for( LR1Item item: findMatchingItems( grammar, tOp.itemSet, tOp.symbols[ 0]))
         {
+          sb.append( detail);
           sb.append( symbol);
           sb.append( item); 
           sb.append( '\n');
@@ -271,7 +322,8 @@ public class LR1
       }
     }
     
-    log.debugf( "Terminal conflicts:\n%s", sb);
+    sb.append( "\n");
+    log.debug( sb);
   }
   
   /**
@@ -284,16 +336,15 @@ public class LR1
   private List<LR1Item> findMatchingItems( Grammar grammar, LR1ItemSet itemSet, int symbol)
   {
     List<LR1Item> items = new ArrayList<LR1Item>();
-    for( LR1Item item: itemSet.items)
+    for( LR1Item item: itemSet.kernel)
     {
-      if ( !grammar.isTerminal( item.symbol())) continue;
-      
-      for( String la: item.laList)
+      String rhs = item.rule.rhs().get( item.dot - 1);
+      if ( grammar.isTerminal( rhs))
       {
-        int[] symbols = grammar.toTerminal( la);
+        int[] symbols = grammar.toTerminal( rhs);
         if ( symbols.length == 1)
         {
-          if ( symbol == symbols[ 0])
+          if ( symbols[ 0] == symbol)
             items.add( item);
         }
         else
@@ -306,7 +357,29 @@ public class LR1
     return items;
   }
   
+  /**
+   * Remove overlapping symbols with identical operations.
+   * @param ops The list of stack operations.
+   */
+  private void removeRedundantItems( List<LR1Event> ops)
+  {
+    LR1Event headOp = ops.get( 0);
+    for( int i=1; i<ops.size(); i++)
+    {
+      LR1Event op = ops.get( i);
+      if ( headOp.type != op.type)
+      {
+        headOp = op;
+      }
+      else if ( headOp.item == op.item && headOp.itemSet == op.itemSet)
+      {
+        ops.remove( i--);
+      }
+    }
+  }
+  
   public final static Log log = Log.getLog( LR1.class);
+  public final static String seperator = "--------------------------------------------------------------------------------";
   
   private Collection<LR1ItemSet> itemSets;
   private int conflicts;

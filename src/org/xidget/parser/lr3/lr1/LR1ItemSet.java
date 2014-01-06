@@ -29,7 +29,7 @@ public class LR1ItemSet
     //
     // Map of closure items already created for each non-terminal rule.
     //
-    Map<Rule, LR1Item> map = new HashMap<Rule, LR1Item>();
+    Map<Rule, LR1Item> map = new LinkedHashMap<Rule, LR1Item>();
     
     //
     // Add kernel to closure.

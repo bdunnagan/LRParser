@@ -54,7 +54,21 @@ public final class Rule
    */
   public final void add( String rhs)
   {
-    this.rhs.add( rhs);
+    if ( rhs.charAt( 0) == '\'')
+    {
+      if ( rhs.charAt( rhs.length() - 1) != '\'')
+        throw new IllegalArgumentException();
+      
+      for( int i=1; i<rhs.length()-1; i++)
+      {
+        char c = rhs.charAt( i);
+        this.rhs.add( Grammar.isReserved( c)? String.format( "#%02X", (int)c): ""+c);
+      }
+    }
+    else
+    {
+      this.rhs.add( rhs);
+    }
   }
   
   /**
