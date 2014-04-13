@@ -41,32 +41,23 @@ public class Parser implements IHandler
   {
     dfa = new DFA( start);
 
-    int preserve = 0;
-    int read = 0;
-    int removed = 0;
-
+    int offset = 0;
     while( true)
     {
-      read = reader.read( buffer, preserve, buffer.length - preserve);
+      int read = reader.read( buffer, offset, buffer.length - offset);
       if ( read < 0)
       {
-        buffer[ preserve] = Grammar.terminusChar;
+        buffer[ offset] = Grammar.terminusChar;
         read = 1;
       }
 
-      int consumed = dfa.parse( this, buffer, 0, read + preserve, removed);
-      if ( consumed == -1) return false;
-      if ( consumed == -2) return true;
+      offset = dfa.parse( this, buffer, offset, read);
+      if ( offset == -1) return false;
+      if ( offset == -2) return true;
 
-      preserve += read - consumed;
-      if ( preserve == buffer.length) 
+      if ( offset == buffer.length)
       {
         buffer = Arrays.copyOf( buffer, buffer.length * 2);
-      }
-      else
-      {
-        System.arraycopy( buffer, consumed, buffer, 0, preserve);
-        removed += consumed;
       }
     }
   }

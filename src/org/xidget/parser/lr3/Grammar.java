@@ -177,6 +177,20 @@ public class Grammar
       rule.expandTokens( this);
     }
   }
+  
+  /**
+   * In-line all rules that are not do not have production handlers
+   */
+  public void inline()
+  {
+    for( int i=0; i<rules.size(); i++)
+    {
+      Rule rule = rules.get( i);
+      rule.symbol = i;
+      rule.epsilonFreeLength();
+      rule.expandTokens( this);
+    }
+  }
 
   /**
    * @return Returns the rules in the grammar.

@@ -3,7 +3,6 @@ package org.xidget.parser.lr3.lr1;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -213,30 +212,30 @@ public class DefaultStateBuilder implements IStateBuilder
       branches.addAll( tOps);
   }
 
-  /**
-   * Resolve terminal reduce conflicts.
-   * @param grammar The grammar.
-   * @param itemSet The item set.
-   * @param tOps The terminal operations.
-   */
-  private void resolveTerminalReduceConflicts( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> tOps)
-  {
-    int minRuleIndex = Integer.MAX_VALUE;
-    int minOpIndex = 0;
-    for( int i=0; i<tOps.size(); i++)
-    {
-      LR1Event tOp = tOps.get( i);
-      int index = grammar.rules().indexOf( tOp.item.rule);
-      if ( index < minRuleIndex) 
-      {
-        minRuleIndex = index;
-        minOpIndex = i;
-      }
-    }
-    
-    tOps.subList( 0, minOpIndex).clear();
-    tOps.subList( minOpIndex + 1, tOps.size()).clear();
-  }
+//  /**
+//   * Resolve terminal reduce conflicts.
+//   * @param grammar The grammar.
+//   * @param itemSet The item set.
+//   * @param tOps The terminal operations.
+//   */
+//  private void resolveTerminalReduceConflicts( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> tOps)
+//  {
+//    int minRuleIndex = Integer.MAX_VALUE;
+//    int minOpIndex = 0;
+//    for( int i=0; i<tOps.size(); i++)
+//    {
+//      LR1Event tOp = tOps.get( i);
+//      int index = grammar.rules().indexOf( tOp.item.rule);
+//      if ( index < minRuleIndex) 
+//      {
+//        minRuleIndex = index;
+//        minOpIndex = i;
+//      }
+//    }
+//    
+//    tOps.subList( 0, minOpIndex).clear();
+//    tOps.subList( minOpIndex + 1, tOps.size()).clear();
+//  }
 
   /* (non-Javadoc)
    * @see org.xidget.parser.lr3.lr1.IStateBuilder#handleNonTerminalConflicts(org.xidget.parser.lr3.Grammar, org.xidget.parser.lr3.lr1.LR1ItemSet, java.util.List)

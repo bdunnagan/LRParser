@@ -1,7 +1,6 @@
 package org.xidget.parser.lr3;
 
 import java.util.Arrays;
-
 import org.xidget.parser.lr3.State.StackOp;
 
 /**
@@ -22,10 +21,10 @@ public final class DFA
     sindex = dfa.sindex;
     
     sstack = new State[ dfa.sstack.length];
-    System.arraycopy( dfa.sstack, 0, sstack, 0, sindex);
+    System.arraycopy( dfa.sstack, 0, sstack, 0, sindex+1);
     
     pstack = new int[ dfa.pstack.length];
-    System.arraycopy( dfa.pstack, 0, pstack, 0, sindex);
+    System.arraycopy( dfa.pstack, 0, pstack, 0, sindex+1);
     
     sstack[ sindex] = state;
   }
@@ -48,8 +47,8 @@ public final class DFA
    */
   public State getState()
   {
-	if ( branchDFA != null) return branchDFA.getState();
-	return sstack[ sindex];
+  	if ( branchDFA != null) return branchDFA.getState();
+	  return sstack[ sindex];
   }
     
   /**
@@ -58,25 +57,26 @@ public final class DFA
    * @param buffer The buffer containing the characters.
    * @param start The offset of the first character to parse.
    * @param length The number of characters to parse.
-   * @param removed The number of characters removed from the buffer since the last call.
    * @return Returns the offset into the buffer of the first handle that should be preserved.
    *         If an error occurs then -1 is returned.
    *         If parsing is complete then -2 is returned.
    */
-  public int parse( Parser parser, char[] buffer, int start, int length, int removed)
+  public int parse( Parser parser, char[] buffer, int start, int length)
   {
     while( branchDFA != null)
     {
-      int result = branchDFA.parse( parser, buffer, start, length, removed);
-      if ( result == -2) return -2;
-      if ( result == -1)
+      int offset = branchDFA.parse( parser, buffer, start, length);
+      if ( offset == -1)
       {
         if ( ++branchIndex == branches.length) return -1;
         branchDFA = new DFA( this, branches[ branchIndex]);
       }
       else
       {
-        return result;
+        pstack = branchDFA.pstack;
+        sstack = branchDFA.sstack;
+        sindex = branchDFA.sindex;
+        return offset;
       }
     }
     
@@ -92,8 +92,7 @@ public final class DFA
       System.out.printf( "[%c] ", buffer[ offset]);
       parser.dumpState();
       
-      if ( ops == null) 
-        return branch( state.branches, parser, buffer, offset, last - offset, removed);
+      if ( ops == null) return branch( state.branches, parser, buffer, offset, last - offset);
       
       StackOp op = ops[ 0];
       if ( symbol < op.low || symbol > op.high)
@@ -122,12 +121,12 @@ public final class DFA
       if ( reduce != null)
       {
         sindex -= reduce.length;
-
+        
         if ( reduce.handler != null)
         {
           // pstack contains the absolute position
-          int position = pstack[ sindex] - removed;
-          reduce.handler.onProduction( parser, reduce, buffer, position, offset - position);
+          int first = pstack[ sindex];
+          reduce.handler.onProduction( parser, reduce, buffer, first, offset - first);
         }
         
         state = sstack[ sindex].gotos[ reduce.symbol];
@@ -149,7 +148,7 @@ public final class DFA
       }
       
       // put absolute position in pstack
-      pstack[ sindex] = offset + removed;
+      pstack[ sindex] = offset;
     }
     
     return offset;
@@ -163,42 +162,42 @@ public final class DFA
    * @param start The starting offset into the buffer.
    * @param length The length of the buffer.
    * @param removed The number of characters removed from the buffer.
-   * @return Returns the offset into the buffer of the first handle that should be preserved.
-   *         If an error occurs then -1 is returned.
-   *         If parsing is complete then -2 is returned.
+   * @return Returns the offset of the next character to parse, -1 if more characters are need, -2 on error.
    */
-  private int branch( State[] branches, Parser parser, char[] buffer, int start, int length, int removed)
+  private int branch( State[] branches, Parser parser, char[] buffer, int start, int length)
   {
     this.branches = branches;
     branchIndex = 0;
     branchDFA = new DFA( this, branches[ branchIndex]);
     while( branchDFA != null)
     {
-      int result = branchDFA.parse( parser, buffer, start, length, removed);
-      if ( result == -2) return -2;
-      if ( result == -1)
+      int offset = branchDFA.parse( parser, buffer, start, length);
+      if ( offset == -1)
       {
         if ( ++branchIndex == branches.length) return -1;
         branchDFA = new DFA( this, branches[ branchIndex]);
       }
       else
       {
-        return result;
+        pstack = branchDFA.pstack;
+        sstack = branchDFA.sstack;
+        sindex = branchDFA.sindex;
+        return offset;
       }
     }	
     return -1;
   }
   
-  /**
-   * Print the current stack.
-   */
-  private final void printStack()
-  {
-    System.out.printf( "%s ", this);
-    for( int i=0; i<=sindex; i++) 
-      System.out.printf( "(S%d, %d) ", sstack[ i].index, pstack[ i]); 
-    System.out.println();
-  }
+//  /**
+//   * Print the current stack.
+//   */
+//  private final void printStack()
+//  {
+//    System.out.printf( "%s ", this);
+//    for( int i=0; i<=sindex; i++) 
+//      System.out.printf( "(S%d, %d) ", sstack[ i].index, pstack[ i]); 
+//    System.out.println();
+//  }
   
   /* (non-Javadoc)
    * @see java.lang.Object#toString()

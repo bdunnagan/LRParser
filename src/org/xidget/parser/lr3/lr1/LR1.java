@@ -194,7 +194,7 @@ public class LR1
   {
     for( int i=0; i<tOps.size(); )
     {
-      int count = findOverlappingExtent( tOps, i);
+      int count = findOverlappingExtent( tOps, i) + 1;
       if ( count > 1)
       {
         List<LR1Event> ops = tOps.subList( i, i + count);
@@ -211,7 +211,7 @@ public class LR1
     
     for( int i=0; i<ntOps.size(); )
     {
-      int count = findOverlappingExtent( ntOps, i);
+      int count = findOverlappingExtent( ntOps, i) + 1;
       if ( count > 1)
       {
         List<LR1Event> ops = ntOps.subList( i, i + count);
@@ -231,7 +231,7 @@ public class LR1
     allOps.addAll( ntOps);
     for( int i=0; i<allOps.size(); )
     {
-      int count = findOverlappingExtent( allOps, i);
+      int count = findOverlappingExtent( allOps, i) + 1;
       if ( count > 1)
       {
         List<LR1Event> ops = allOps.subList( i, i + count);
@@ -251,7 +251,7 @@ public class LR1
    * Find the number of ops with symbols that are equal to, or overlap the range of, the op with the specified index.
    * @param ops The list of ops.
    * @param index The index of the first op to check.
-   * @return Returns the number of ops (always >= 1).
+   * @return Returns the number of overlapping ops.
    */
   private int findOverlappingExtent( List<LR1Event> ops, int index)
   {
@@ -259,10 +259,10 @@ public class LR1
     for( int i=index+1; i<ops.size(); i++)
     {
       int[] symbols = ops.get( i).symbols;
-      if ( symbols[ 0] > op.symbols[ op.symbols.length - 1])
+      if ( op.symbols[ op.symbols.length - 1] >= symbols[ 0])
         return i - index;
     }
-    return 1;
+    return 0;
   }
   
   /**

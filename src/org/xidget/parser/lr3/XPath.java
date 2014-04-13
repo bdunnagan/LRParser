@@ -18,8 +18,8 @@ public class XPath
 
     definePath( handler);
     defineExpression( handler);
-    defineFunction( handler);
-    definePrimitives();
+//    defineFunction( handler);
+    definePrimitives( handler);
   }
 
   /**
@@ -129,15 +129,16 @@ public class XPath
   /**
    * Define rules for primitives.
    */
-  private void definePrimitives()
+  private void definePrimitives( IHandler handler)
   {
     // QName
-    g.rule( "QName", "NCName", ":", "NCName");
-    g.rule( "QName", "NCName");
+    g.rule( handler, "QName", "NCName", ":", "NCName");
+    g.rule( handler, "QName", "NCName");
 
     // NCName
-    g.rule( "NCName", "NCNameStartChar");
-    g.rule( "NCName", "NCName", "NameChar");
+    g.rule( handler, "NCName", "_ncname");
+    g.rule( "_ncname", "NCNameStartChar");
+    g.rule( "_ncname", "_ncname", "NameChar");
 
     // Names
     g.rule( "NameStartChar", ":");
@@ -231,7 +232,8 @@ public class XPath
       System.out.print( "> ");
       String line = reader.readLine();
       if ( line.equals( " ")) break;
-      parser.parse( new StringReader( line));
+      if ( !parser.parse( new StringReader( line)))
+        System.out.println( "Parse failed.");
     }
   }  
 }
