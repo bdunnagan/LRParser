@@ -29,6 +29,9 @@ public class XPath
   {
     // Expr
     g.rule( "Expr", "PrimaryExpr");
+    g.rule( "Expr", "space", "PrimaryExpr");
+    g.rule( "Expr", "PrimaryExpr", "space");
+    g.rule( "Expr", "space", "PrimaryExpr", "space");
     //	g.rule( "Expr", "Expr", "space", "or", "space", "Expr");
     //	g.rule( "Expr", "");
     //	g.rule( "Expr", "");
@@ -40,10 +43,11 @@ public class XPath
     g.rule( "ExplicitExpr", "(", "Expr", ")");
 
     // PrimaryExpr
-    g.rule( "PrimaryExpr", "$", "QName");
-    g.rule( "PrimaryExpr", "single-quoted");
-    g.rule( "PrimaryExpr", "double-quoted");
-    g.rule( "PrimaryExpr", "number");
+    g.rule( handler, "PrimaryExpr", "$", "QName");
+    g.rule( handler, "PrimaryExpr", "single-quoted");
+    g.rule( handler, "PrimaryExpr", "double-quoted");
+    g.rule( handler, "PrimaryExpr", "number");
+    g.rule( handler, "PrimaryExpr", "Path");
     //	g.rule( "PrimaryExpr", "FunctionCall");
   }
 
@@ -67,18 +71,17 @@ public class XPath
 
     // Relative Path
     g.rule( "RelativePath", "Step");
-//    g.rule( "RelativePath", "Step", "PredicateList");
     g.rule( "RelativePath", "RelativePath", "ChildStep");
     g.rule( "RelativePath", "RelativePath", "DescendantStep");
 
     // Predicates
-    g.rule( "PredicateList", "Predicate");
-    g.rule( "PredicateList", "PredicateList", "Predicate");
-    g.rule( "Predicate", "#5B", "Expr", "#5D");
+    g.rule( handler, "PredicateList", "Predicate");
+    g.rule( handler, "PredicateList", "PredicateList", "Predicate");
+    g.rule( handler, "Predicate", "#5B", "Expr", "#5D");
 
     // types of steps
-    g.rule( "ChildStep", "/", "Step");
-    g.rule( "DescendantStep", "/", "/", "Step");
+    g.rule( handler, "ChildStep", "/", "Step");
+    g.rule( handler, "DescendantStep", "/", "/", "Step");
 
     // Step
     g.rule( handler, "Step", "AxisSpecifier", "NodeTest");
@@ -189,10 +192,8 @@ public class XPath
     g.rule( "non-single-quote", "[#28-#FFFF]");
 
     // whitespace
-    g.rule( "space", "[#01-#20]", "space").setPriority( -1000);
-    g.rule( "space", "[#01-#20]").setPriority( -1001);
-    g.rule( "space?");
-    g.rule( "space?", "space");    
+    g.rule( "space", "[#01-#20]", "space");
+    g.rule( "space", "[#01-#20]");
   }
 
   private Grammar g;
