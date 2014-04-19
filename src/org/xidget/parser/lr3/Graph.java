@@ -41,7 +41,7 @@ public final class Graph
     {
       String symbol = rhs.get( index);
       if ( grammar.isTerminal( symbol)) follow.add( symbol); else follow.addAll( firsts.get( symbol));
-      if ( !follow.remove( Grammar.epsilon)) return follow;
+      //if ( !follow.remove( Grammar.epsilon)) return follow;
     }
 
     if ( rule.name().equals( Grammar.augment))
@@ -112,7 +112,7 @@ public final class Graph
     for( String symbol: symbols)
     {
       if ( grammar.isTerminal( symbol)) union.add( symbol); else union.addAll( firsts.get( symbol));
-      if ( !union.remove( Grammar.epsilon)) break;
+      //if ( !union.remove( Grammar.epsilon)) break;
     }
     return union;
   }
@@ -158,8 +158,7 @@ public final class Graph
         if ( set != null) union.addAll( set);
       }
       
-      //if ( !union.remove( Grammar.epsilon)) break;
-      if ( union.contains( Grammar.epsilon)) break;
+      //if ( union.contains( Grammar.epsilon)) break;
     }
     
     if ( union.size() == 0) union.add( Grammar.epsilon);

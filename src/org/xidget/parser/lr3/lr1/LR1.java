@@ -100,11 +100,10 @@ public class LR1
    */
   private void createStates( Grammar grammar, Collection<LR1ItemSet> itemSets, IStateBuilder builder)
   {
-    int count = 1;
     for( LR1ItemSet itemSet: itemSets)
     {
       log.verbose( seperator);
-      log.verbosef( "#%d: %s\n", count++, itemSet);
+      log.verbosef( "%s\n", itemSet);
       
       Set<String> tSet = new LinkedHashSet<String>();
       Set<String> ntSet = new LinkedHashSet<String>();

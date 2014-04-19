@@ -173,7 +173,8 @@ public class Grammar
     {
       Rule rule = rules.get( i);
       rule.symbol = i;
-      rule.epsilonFreeLength();
+      //rule.epsilonFreeLength();
+      rule.length = rule.rhs().size();
       rule.expandTokens( this);
     }
   }
@@ -183,13 +184,13 @@ public class Grammar
    */
   public void inline()
   {
-    for( int i=0; i<rules.size(); i++)
-    {
-      Rule rule = rules.get( i);
-      rule.symbol = i;
-      rule.epsilonFreeLength();
-      rule.expandTokens( this);
-    }
+//    for( int i=0; i<rules.size(); i++)
+//    {
+//      Rule rule = rules.get( i);
+//      rule.symbol = i;
+//      rule.epsilonFreeLength();
+//      rule.expandTokens( this);
+//    }
   }
 
   /**

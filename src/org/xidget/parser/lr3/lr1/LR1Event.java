@@ -132,10 +132,10 @@ public class LR1Event implements Comparable<LR1Event>
     
     switch( type)
     { 
-      case tshift:  return String.format( "Shift  %s %s", string, itemSet.items.iterator().next());
+      case tshift:  return String.format( "Shift  %s\n%s", string, itemSet.toString());
       case reduce:  return String.format( "Reduce %s %s", string, item);
       case accept:  return String.format( "Accept %s", string);
-      case ntshift: return String.format( "Goto   %s %s", string, itemSet.items.iterator().next());
+      case ntshift: return String.format( "Goto   %s\n%s", string, itemSet.toString());
     }
     
     return null;

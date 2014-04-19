@@ -16,6 +16,14 @@ public class XPath
   {	
     g = new Grammar();
 
+    g.rule( handler, "A", "A?", "B");
+    g.rule( handler, "A?");
+    g.rule( handler, "A?", "'a'");
+    g.rule( handler, "B", "C?", "'b'");
+    g.rule( handler, "C?");
+    g.rule( handler, "C?", "'c'");
+    if ( true) return;
+    
     defineExpression( handler);
     definePath( handler);
 //    defineFunction( handler);
@@ -83,8 +91,6 @@ public class XPath
     // Step
     g.rule( handler, "Step", "AxisSpecifier", "NodeTest");
     g.rule( handler, "Step", "AxisSpecifier", "NodeTest", "PredicateList");
-    g.rule( handler, "Step", "QName");
-    g.rule( handler, "Step", "QName", "PredicateList");
     g.rule( handler, "Step", ".");
     g.rule( handler, "Step", "'..'");
 
@@ -109,6 +115,7 @@ public class XPath
     // Axis Specifier
     g.rule( handler, "AxisSpecifier", "AxisName", ":", ":");
     g.rule( handler, "AxisSpecifier", "@");
+    g.rule( handler, "AxisSpecifier");
 
     // axis name
     g.rule( handler, "AxisName", "'ancestor'");
@@ -164,10 +171,16 @@ public class XPath
     //	g.rule( "NameChar", "[#0300-#036F]");
     //	g.rule( "NameChar", "[#203F-#2040]");
 
-    // number
-    g.rule( "number", "digit");
-    g.rule( "number", "digit", ".", "number");
-    g.rule( "number", ".", "number");
+    // numbers
+    g.rule( "integer", "digit");
+    g.rule( "integer", "integer", "digit");
+    g.rule( "decimal", "integer", ".", "integer");
+    g.rule( "number", "integer");
+    g.rule( "number", "+", "integer");
+    g.rule( "number", "-", "integer");
+    g.rule( "number", "decimal");
+    g.rule( "number", "+", "decimal");
+    g.rule( "number", "-", "decimal");
 
     // letters and digits
     g.rule( "letter", "[a-z]");

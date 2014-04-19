@@ -102,7 +102,7 @@ public final class DFA
         while( ++i < ops.length)
         {
           op = ops[ i];
-          if ( symbol >= op.low && symbol <= op.high)
+          if ( symbol >= op.low && symbol <= op.high || op.low == Grammar.epsilonChar)
           {
             // mem writes may be expensive here
             ops[ i] = ops[ i-1];
@@ -136,7 +136,8 @@ public final class DFA
       // SHIFT
       else
       {
-        offset++;
+        if ( op.low != Grammar.epsilonChar)
+          offset++;
         
         if ( ++sindex == sstack.length)
         {

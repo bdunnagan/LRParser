@@ -34,14 +34,15 @@ public class LR1Item
   
   /**
    * Find the terminals that follow this item.
-   * @param grammar
+   * @param grammar The grammar.
    * @return Returns the list of terminals.
    */
   public Set<String> follow( Grammar grammar)
   {
     Graph graph = grammar.graph();
     Set<String> follow = graph.follow( rule, dot);
-    if ( follow.size() > 0 && !follow.remove( Grammar.epsilon)) return follow;
+//    if ( follow.size() > 0 && !follow.remove( Grammar.epsilon)) return follow;
+    if ( follow.size() > 0) return follow;
     return laList;
   }
   
@@ -62,7 +63,7 @@ public class LR1Item
    */
   public LR1Item increment()
   {
-    if ( rule.rhs().get( 0).equals( Grammar.epsilon)) return null;
+    //if ( rule.rhs().get( 0).equals( Grammar.epsilon)) return null;
     
     if ( dot < rule.rhs().size())
     {
@@ -79,7 +80,8 @@ public class LR1Item
    */
   public boolean complete()
   {
-    return dot == rule.rhs().size() || ((dot + 1) == rule.rhs().size() && symbol().equals( Grammar.epsilon));
+//    return dot == rule.rhs().size() || ((dot + 1) == rule.rhs().size() && symbol().equals( Grammar.epsilon));
+    return dot == rule.rhs().size();
   }
   
   /* (non-Javadoc)

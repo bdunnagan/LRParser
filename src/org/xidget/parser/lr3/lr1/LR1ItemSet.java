@@ -65,14 +65,6 @@ public class LR1ItemSet
           if ( closureItem.laList.addAll( firstSet))
             stack.add( closureItem);
         }
-        
-        // include rules that follow epsilon
-//        if ( closureItem.symbol().equals( Grammar.epsilon))
-//        {
-//          item.dot++;
-//          refs.addAll( grammar.lhs( item.symbol()));
-//          item.dot--;
-//        }
       }
     }
   }
