@@ -3,11 +3,13 @@ package org.xidget.parser.lr3.lr1;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.xidget.parser.lr3.Grammar;
 import org.xidget.parser.lr3.Rule;
 import org.xmodel.log.Log;
@@ -199,6 +201,7 @@ public class LR1
       {
         List<LR1Event> ops = tOps.subList( i, i + count);
         removeRedundantItems( ops);
+        removeEpsilonReductions( ops);
         if ( ops.size() > 1)
         {
           logConflicts( grammar, itemSet, ops);
@@ -216,6 +219,7 @@ public class LR1
       {
         List<LR1Event> ops = ntOps.subList( i, i + count);
         removeRedundantItems( ops);
+        removeEpsilonReductions( ops);
         if ( ops.size() > 1)
         {
           logConflicts( grammar, itemSet, ops);
@@ -238,9 +242,7 @@ public class LR1
         removeRedundantItems( ops);
         if ( ops.size() > 1)
         {
-          logConflicts( grammar, itemSet, ops);
           builder.handleOtherConflicts( grammar, itemSet, ops);
-          conflicts++;
         }
       }
       i += count;    
@@ -374,6 +376,24 @@ public class LR1
       else if ( headOp.item == op.item && headOp.itemSet == op.itemSet)
       {
         ops.remove( i--);
+      }
+    }
+  }
+
+  /**
+   * Remove epsilon reductions.
+   * @param ops The list of stack operations.
+   */
+  private void removeEpsilonReductions( List<LR1Event> ops)
+  {
+    Iterator<LR1Event> iter = ops.iterator();
+    while( iter.hasNext())
+    {
+      LR1Event op = iter.next();
+      if ( op.item != null && op.item.symbol() != null && op.item.symbol().equals( Grammar.epsilon))
+      {
+        System.out.println( "Removing reduce operation: "+op);
+        iter.remove();
       }
     }
   }

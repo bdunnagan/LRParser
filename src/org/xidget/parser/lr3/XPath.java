@@ -16,8 +16,8 @@ public class XPath
   {	
     g = new Grammar();
 
-    definePath( handler);
     defineExpression( handler);
+    definePath( handler);
 //    defineFunction( handler);
     definePrimitives( handler);
   }
@@ -28,11 +28,8 @@ public class XPath
   private void defineExpression( IHandler handler)
   {
     // Expr
-    g.rule( "Expr", "PrimaryExpr");
-    g.rule( "Expr", "space", "PrimaryExpr");
-    g.rule( "Expr", "PrimaryExpr", "space");
-    g.rule( "Expr", "space", "PrimaryExpr", "space");
-    //	g.rule( "Expr", "Expr", "space", "or", "space", "Expr");
+    g.rule( "Expr", "space?", "PrimaryExpr", "space?");
+    //g.rule( "Expr", "Expr", "space", "or", "space", "Expr");
     //	g.rule( "Expr", "");
     //	g.rule( "Expr", "");
     //	g.rule( "Expr", "");
@@ -135,8 +132,8 @@ public class XPath
   private void definePrimitives( IHandler handler)
   {
     // QName
-    g.rule( handler, "QName", "NCName", ":", "NCName");
-    g.rule( handler, "QName", "NCName");
+    g.rule( handler, "QName", "_ncname", ":", "_ncname");
+    g.rule( handler, "QName", "_ncname");
 
     // NCName
     g.rule( handler, "NCName", "_ncname");
@@ -194,6 +191,8 @@ public class XPath
     // whitespace
     g.rule( "space", "[#01-#20]", "space");
     g.rule( "space", "[#01-#20]");
+    g.rule( "space?", "space");
+    g.rule( "space?");
   }
 
   private Grammar g;

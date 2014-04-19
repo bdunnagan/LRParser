@@ -37,7 +37,7 @@ public class LR1ItemSet
     items.addAll( kernel);
     
     //
-    // Complete LR0 closure with empty look-ahead first.
+    // LR0 closure
     //
     List<LR1Item> stack = new ArrayList<LR1Item>();
     stack.addAll( kernel);
@@ -47,8 +47,11 @@ public class LR1ItemSet
       
       Set<String> firstSet = item.follow( grammar);
       
-      for( Rule rule: grammar.lhs( item.symbol()))
+      List<Rule> refs = grammar.lhs( item.symbol());
+      for( int i=0; i<refs.size(); i++)
       {
+        Rule rule = refs.get( i);
+        
         LR1Item closureItem = map.get( rule);
         if ( closureItem == null)
         {
@@ -62,6 +65,14 @@ public class LR1ItemSet
           if ( closureItem.laList.addAll( firstSet))
             stack.add( closureItem);
         }
+        
+        // include rules that follow epsilon
+//        if ( closureItem.symbol().equals( Grammar.epsilon))
+//        {
+//          item.dot++;
+//          refs.addAll( grammar.lhs( item.symbol()));
+//          item.dot--;
+//        }
       }
     }
   }

@@ -94,6 +94,7 @@ public final class DFA
       
       if ( ops == null) return branch( state.branches, parser, buffer, offset, last - offset);
       
+      // LOOKUP
       StackOp op = ops[ 0];
       if ( symbol < op.low || symbol > op.high)
       {
@@ -116,7 +117,7 @@ public final class DFA
         }
       }
       
-      // reduce
+      // REDUCE
       Rule reduce = op.reduce;
       if ( reduce != null)
       {
@@ -124,7 +125,6 @@ public final class DFA
         
         if ( reduce.handler != null)
         {
-          // pstack contains the absolute position
           int first = pstack[ sindex];
           reduce.handler.onProduction( parser, reduce, buffer, first, offset - first);
         }
@@ -133,7 +133,7 @@ public final class DFA
         sstack[ ++sindex] = state;
       }
       
-      // shift
+      // SHIFT
       else
       {
         offset++;
@@ -147,7 +147,6 @@ public final class DFA
         if ( (sstack[ sindex] = op.next) == null) return -2;
       }
       
-      // put absolute position in pstack
       pstack[ sindex] = offset;
     }
     

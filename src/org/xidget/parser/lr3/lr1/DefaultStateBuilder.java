@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.xidget.parser.lr3.Grammar;
 import org.xidget.parser.lr3.Parser;
 import org.xidget.parser.lr3.State;
@@ -159,54 +160,27 @@ public class DefaultStateBuilder implements IStateBuilder
   @Override
   public void handleTerminalConflicts( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> tOps)
   {
-    resolveTerminalConflicts( grammar, itemSet, tOps);
-    
-//    //
-//    // Rule 1: If there is at least one shift, then ignore reductions.
-//    // (Type.reduce follows Type.tshift)
-//    //
-//    if ( tOps.get( 0).type == Type.tshift)
-//    {
-//      resolveTerminalConflicts( grammar, itemSet, tOps);
-//      return;
-//    }
-//    
-//    //
-//    // Rule 2: Resolve reduction conflicts by choosing the rule that comes first in the grammar.
-//    //
-//    if ( tOps.get( 0).type == Type.reduce)
-//    {
-//      resolveTerminalReduceConflicts( grammar, itemSet, tOps);
-//      return;
-//    }
+    resolveConflictsByPriority( grammar, itemSet, tOps);
+    resolveConflictsByBranching( grammar, itemSet, tOps);
   }
-  
-//  /**
-//   * Remove ops of the specified type.
-//   * @param type The type.
-//   * @param ops The ops.
-//   */
-//  private void filterOps( LR1Event.Type type, List<LR1Event> ops)
-//  {
-//    Iterator<LR1Event> iter = ops.iterator();
-//    while( iter.hasNext())
-//    {
-//      LR1Event tOp = iter.next();
-//      if ( tOp.type == type)
-//      {
-//        log.warnf( "Ignoring reduction: %s", tOp);
-//        iter.remove();
-//      }
-//    }
-//  }
-  
+
   /**
-   * Resolve terminal shift conflicts (and ignore reductions).
+   * Resolve the specified conflicts using priority, if applicable.
    * @param grammar The grammar.
    * @param itemSet The item set.
    * @param tOps The terminal operations.
    */
-  private void resolveTerminalConflicts( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> tOps)
+  private void resolveConflictsByPriority( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> tOps)
+  {
+  }  
+  
+  /**
+   * Resolve the specified conflicts by creating parse branches.
+   * @param grammar The grammar.
+   * @param itemSet The item set.
+   * @param tOps The terminal operations.
+   */
+  private void resolveConflictsByBranching( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> tOps)
   {
     if ( tOps.size() > 1)
       branches.addAll( tOps);

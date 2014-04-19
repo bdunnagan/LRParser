@@ -158,7 +158,8 @@ public final class Graph
         if ( set != null) union.addAll( set);
       }
       
-      if ( !union.remove( Grammar.epsilon)) break;
+      //if ( !union.remove( Grammar.epsilon)) break;
+      if ( union.contains( Grammar.epsilon)) break;
     }
     
     if ( union.size() == 0) union.add( Grammar.epsilon);
