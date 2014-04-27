@@ -13,7 +13,7 @@ public final class State
   @Override
   public String toString()
   {
-    return String.format( "S%d", index);
+    return (index >= 0)? String.format( "S%d", index): String.format( "B%d", -index); 
   }
   
   public final static class StackOp

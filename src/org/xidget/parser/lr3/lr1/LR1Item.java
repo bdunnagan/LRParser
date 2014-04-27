@@ -2,7 +2,6 @@ package org.xidget.parser.lr3.lr1;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
-
 import org.xidget.parser.lr3.Grammar;
 import org.xidget.parser.lr3.Graph;
 import org.xidget.parser.lr3.Rule;
@@ -41,6 +40,7 @@ public class LR1Item
   {
     Graph graph = grammar.graph();
     Set<String> follow = graph.follow( rule, dot);
+// epsilon is not returned by graph.follow()
 //    if ( follow.size() > 0 && !follow.remove( Grammar.epsilon)) return follow;
     if ( follow.size() > 0) return follow;
     return laList;

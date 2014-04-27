@@ -10,12 +10,14 @@ public final class DFA
 {
   public DFA( State start)
   {
+    this.id = start.toString();
     this.start = start;
     reset();
   }
   
   public DFA( DFA dfa, State state)
   {
+    this.id = state.toString();
     this.start = state;
     
     sindex = dfa.sindex;
@@ -89,8 +91,8 @@ public final class DFA
       State state = sstack[ sindex];
       StackOp[] ops = state.stackOps;
       
-      System.out.printf( "[%c] ", buffer[ offset]);
-      parser.dumpState();
+//      System.out.printf( "[%c] ", buffer[ offset]);
+//      parser.dumpState();
       
       if ( ops == null) return branch( state.branches, parser, buffer, offset, last - offset);
       
@@ -102,7 +104,7 @@ public final class DFA
         while( ++i < ops.length)
         {
           op = ops[ i];
-          if ( symbol >= op.low && symbol <= op.high || op.low == Grammar.epsilonChar)
+          if ( symbol >= op.low && symbol <= op.high)
           {
             // mem writes may be expensive here
             ops[ i] = ops[ i-1];
@@ -110,10 +112,22 @@ public final class DFA
             break;
           }
         }
+        
         if ( i == ops.length)
         {
-          parser.onError( this, offset, sstack, sindex);
-          return -1;
+          for( i=0; i<ops.length; i++)
+            if ( op.low == Grammar.epsilonChar)
+            {
+              // compensate for SHIFT offset++
+              offset--; 
+              break;
+            }
+          
+          if ( i == ops.length)
+          {          
+            parser.onError( this, offset, sstack, sindex);
+            return -1;
+          }
         }
       }
       
@@ -136,8 +150,7 @@ public final class DFA
       // SHIFT
       else
       {
-        if ( op.low != Grammar.epsilonChar)
-          offset++;
+        offset++;
         
         if ( ++sindex == sstack.length)
         {
@@ -145,7 +158,8 @@ public final class DFA
           pstack = Arrays.copyOf( pstack, pstack.length * 2);
         }
 
-        if ( (sstack[ sindex] = op.next) == null) return -2;
+        if ( (sstack[ sindex] = op.next) == null) 
+          return -2;
       }
       
       pstack[ sindex] = offset;
@@ -205,9 +219,10 @@ public final class DFA
   @Override
   public String toString()
   {
-    return String.format( "DFA-%X", start.hashCode());
+    return String.format( "DFA-%s", id);
   }
 
+  private String id;
   private State start;
   private State[] sstack;
   private int[] pstack;

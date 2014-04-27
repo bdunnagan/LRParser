@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import org.xidget.parser.lr3.Grammar;
 import org.xidget.parser.lr3.Parser;
 import org.xidget.parser.lr3.State;
@@ -62,9 +61,11 @@ public class DefaultStateBuilder implements IStateBuilder
         btOps.add( tOp);
 
         State branch = new State();
-        state.index = ++counter;
+        branch.index = --branchCounter;
         itemSets.put( branch, itemSet);
         state.branches[ i++] = branch;
+        
+        log.verbosef( "==== %s ====\ntOp: %s\n%s\n", branch, tOp, itemSet);
         
         createSymbolTable( grammar, branch, btOps, ntOps);
         createStackOps( grammar, branch, btOps, ntOps);
@@ -77,6 +78,10 @@ public class DefaultStateBuilder implements IStateBuilder
       if ( state.stackOps == null) createSymbolTable( grammar, state, tOps, ntOps);
       createStackOps( grammar, state, tOps, ntOps);
     }
+   
+    log.verbosef( "==== %s ====\n%s\n", state, itemSet);
+    for( LR1Event tOp: tOps) log.verbose( tOp);
+    for( LR1Event ntOp: ntOps) log.verbose( ntOp);
   }
   
   private void createStackOps( Grammar grammar, State state, List<LR1Event> tOps, List<LR1Event> ntOps)
@@ -116,7 +121,7 @@ public class DefaultStateBuilder implements IStateBuilder
     if ( state == null)
     {
       state = new State();
-      state.index = ++counter;
+      state.index = ++stateCounter;
       states.put( itemSet, state);
       itemSets.put( state, itemSet);
       
@@ -182,6 +187,10 @@ public class DefaultStateBuilder implements IStateBuilder
    */
   private void resolveConflictsByBranching( Grammar grammar, LR1ItemSet itemSet, List<LR1Event> tOps)
   {
+    // combine all non overlapping ops with only one symbol
+    // create branches for other ops
+    
+    
     if ( tOps.size() > 1)
       branches.addAll( tOps);
   }
@@ -234,11 +243,12 @@ public class DefaultStateBuilder implements IStateBuilder
   {
   }
 
-  private static Log log = Log.getLog( DefaultStateBuilder.class);
+  public static Log log = Log.getLog( DefaultStateBuilder.class);
   
   private Map<LR1ItemSet, State> states;
   private Map<State, LR1ItemSet> itemSets;
   private Set<LR1Event> branches;
-  private int counter;
+  private int stateCounter;
+  private int branchCounter;
   private State start;
 }

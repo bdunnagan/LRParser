@@ -16,13 +16,13 @@ public class XPath
   {	
     g = new Grammar();
 
-    g.rule( handler, "A", "A?", "B");
-    g.rule( handler, "A?");
-    g.rule( handler, "A?", "'a'");
-    g.rule( handler, "B", "C?", "'b'");
-    g.rule( handler, "C?");
-    g.rule( handler, "C?", "'c'");
-    if ( true) return;
+//    g.rule( handler, "A", "A?", "B?C");
+//    g.rule( handler, "A?");
+//    g.rule( handler, "A?", "'a'");
+//    g.rule( handler, "B?C", "B?", "'c'");
+//    g.rule( handler, "B?");
+//    g.rule( handler, "B?", "'b'");
+//    if ( true) return;
     
     defineExpression( handler);
     definePath( handler);
@@ -89,6 +89,8 @@ public class XPath
     g.rule( handler, "DescendantStep", "/", "/", "Step");
 
     // Step
+    g.rule( handler, "Step", "NodeTest");
+    g.rule( handler, "Step", "NodeTest", "PredicateList");
     g.rule( handler, "Step", "AxisSpecifier", "NodeTest");
     g.rule( handler, "Step", "AxisSpecifier", "NodeTest", "PredicateList");
     g.rule( handler, "Step", ".");
@@ -113,9 +115,8 @@ public class XPath
     g.rule( handler, "NameTest", "QName");
 
     // Axis Specifier
-    g.rule( handler, "AxisSpecifier", "AxisName", ":", ":");
+    g.rule( "AxisSpecifier", "AxisName", ":", ":");
     g.rule( handler, "AxisSpecifier", "@");
-    g.rule( handler, "AxisSpecifier");
 
     // axis name
     g.rule( handler, "AxisName", "'ancestor'");
@@ -213,7 +214,7 @@ public class XPath
   public static void main( String[] args) throws Exception
   {
     Log.setDefaultSink( new ConsoleSink());
-    LR1.log.setLevel( Log.all);
+    DefaultStateBuilder.log.setLevel( Log.all);
 
     IHandler handler = new IHandler() {
       public void onProduction( Parser parser, Rule rule, char[] buffer, int start, int length)

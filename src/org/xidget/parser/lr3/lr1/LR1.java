@@ -9,7 +9,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import org.xidget.parser.lr3.Grammar;
 import org.xidget.parser.lr3.Rule;
 import org.xmodel.log.Log;
@@ -102,9 +101,6 @@ public class LR1
   {
     for( LR1ItemSet itemSet: itemSets)
     {
-      log.verbose( seperator);
-      log.verbosef( "%s\n", itemSet);
-      
       Set<String> tSet = new LinkedHashSet<String>();
       Set<String> ntSet = new LinkedHashSet<String>();
       
@@ -174,13 +170,42 @@ public class LR1
       Collections.sort( tOps);
       Collections.sort( ntOps);
       
-      for( LR1Event tOp: tOps) log.verbose( tOp);
-      for( LR1Event ntOp: ntOps) log.verbose( ntOp);
-      log.verbose( "");
+//      optimizeGotos( ntOps);
       
       handleConflicts( grammar, itemSet, tOps, ntOps, builder);
       builder.createState( grammar, itemSet, tOps, ntOps);
     }    
+  }
+  
+  /**
+   * Coallesce goto operations with the same successor into symbol ranges.
+   * @param ntOps The goto operations.
+   */
+  private void optimizeGotos( List<LR1Event> ntOps)
+  {
+    if ( ntOps.size() == 0) return;
+    
+    LR1Event prevOp = ntOps.get( 0);
+    int[] range = null;
+    for( int i=1; i<ntOps.size(); i++)
+    {
+      LR1Event currOp = ntOps.get( i);
+      if ( currOp.itemSet.equals( prevOp.itemSet) && currOp.symbols[ 0] == prevOp.symbols[ 0] + 1)
+      {
+        if ( range == null) 
+        {
+          range = new int[] { prevOp.symbols[ 0], 0};
+          prevOp.symbols = range;
+        }
+        range[ 1] = currOp.symbols[ 0];
+        ntOps.remove( i--);
+      }
+      else
+      {
+        prevOp = currOp;
+        range = null;
+      }
+    }
   }
   
   /**
@@ -195,7 +220,7 @@ public class LR1
   {
     for( int i=0; i<tOps.size(); )
     {
-      int count = findOverlappingExtent( tOps, i) + 1;
+      int count = findOverlappingExtent( tOps, i);
       if ( count > 1)
       {
         List<LR1Event> ops = tOps.subList( i, i + count);
@@ -213,7 +238,7 @@ public class LR1
     
     for( int i=0; i<ntOps.size(); )
     {
-      int count = findOverlappingExtent( ntOps, i) + 1;
+      int count = findOverlappingExtent( ntOps, i);
       if ( count > 1)
       {
         List<LR1Event> ops = ntOps.subList( i, i + count);
@@ -234,7 +259,7 @@ public class LR1
     allOps.addAll( ntOps);
     for( int i=0; i<allOps.size(); )
     {
-      int count = findOverlappingExtent( allOps, i) + 1;
+      int count = findOverlappingExtent( allOps, i);
       if ( count > 1)
       {
         List<LR1Event> ops = allOps.subList( i, i + count);
@@ -260,10 +285,10 @@ public class LR1
     for( int i=index+1; i<ops.size(); i++)
     {
       int[] symbols = ops.get( i).symbols;
-      if ( op.symbols[ op.symbols.length - 1] >= symbols[ 0])
+      if ( op.symbols[ op.symbols.length - 1] < symbols[ 0])
         return i - index;
     }
-    return 0;
+    return ops.size() - index;
   }
   
   /**
