@@ -91,8 +91,8 @@ public final class DFA
       State state = sstack[ sindex];
       StackOp[] ops = state.stackOps;
       
-//      System.out.printf( "[%c] ", buffer[ offset]);
-//      parser.dumpState();
+      System.out.printf( "[%c] ", buffer[ offset]);
+      parser.dumpState();
       
       if ( ops == null) return branch( state.branches, parser, buffer, offset, last - offset);
       

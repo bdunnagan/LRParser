@@ -48,11 +48,24 @@ public class XPath
     g.rule( "ExplicitExpr", "(", "Expr", ")");
 
     // PrimaryExpr
-    g.rule( handler, "PrimaryExpr", "$", "QName");
-    g.rule( handler, "PrimaryExpr", "single-quoted");
-    g.rule( handler, "PrimaryExpr", "double-quoted");
-    g.rule( handler, "PrimaryExpr", "number");
-    g.rule( handler, "PrimaryExpr", "Path");
+    g.rule( "PrimaryExpr", "VarExpr");
+    g.rule( "PrimaryExpr", "SingleQuoteLiteral");
+    g.rule( "PrimaryExpr", "DoubleQuoteLiteral");
+    g.rule( "PrimaryExpr", "NumericLiteral");
+    g.rule( "PrimaryExpr", "RelativePath");
+    g.rule( "PrimaryExpr", "AbsolutePath");
+    
+    // VarExpr
+    g.rule( handler, "VarExpr", "$", "QName");
+    
+    // Quoted Literal
+    g.rule( handler, "SingleQuoteLiteral", "single-quoted");
+    g.rule( handler, "DoubleQuoteLiteral", "double-quoted");
+    
+    // Numeric Literal
+    g.rule( handler, "NumericLiteral", "number");
+    
+    
     //	g.rule( "PrimaryExpr", "FunctionCall");
   }
 
@@ -69,24 +82,19 @@ public class XPath
    */
   private void definePath( IHandler handler)
   {
-    // Path
-    g.rule( "Path", "ChildStep", "RelativePath");
-    g.rule( "Path", "DescendantStep", "RelativePath");
-    g.rule( "Path", "RelativePath");
-
+    // Absolute Path
+    g.rule( handler, "AbsolutePath", "/", "RelativePath");
+    g.rule( handler, "AbsolutePath", "'//'", "RelativePath");
+    
     // Relative Path
-    g.rule( "RelativePath", "Step");
-    g.rule( "RelativePath", "RelativePath", "ChildStep");
-    g.rule( "RelativePath", "RelativePath", "DescendantStep");
-
+    g.rule( handler, "RelativePath", "Step");
+    g.rule( handler, "RelativePath", "RelativePath", "'/'", "Step");
+    g.rule( handler, "RelativePath", "RelativePath", "'//'", "Step");
+    
     // Predicates
     g.rule( handler, "PredicateList", "Predicate");
     g.rule( handler, "PredicateList", "PredicateList", "Predicate");
     g.rule( handler, "Predicate", "#5B", "Expr", "#5D");
-
-    // types of steps
-    g.rule( handler, "ChildStep", "/", "Step");
-    g.rule( handler, "DescendantStep", "/", "/", "Step");
 
     // Step
     g.rule( handler, "Step", "NodeTest");
