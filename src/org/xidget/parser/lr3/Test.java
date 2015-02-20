@@ -4,8 +4,8 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.util.Arrays;
-
 import org.xidget.parser.lr3.Rule.IHandler;
+import org.xidget.parser.lr3.lr1.DefaultStateBuilder;
 import org.xidget.parser.lr3.lr1.LR1;
 import org.xmodel.log.Log;
 
@@ -74,7 +74,9 @@ public class Test
       rule.handler = handler;
     
     LR1 lr = new LR1();
-    Parser parser = lr.compile( grammar);
+    DefaultStateBuilder builder = new DefaultStateBuilder();
+    lr.compile( grammar, builder);
+    Parser parser = builder.getParser();
     
     System.out.println( grammar);
     
