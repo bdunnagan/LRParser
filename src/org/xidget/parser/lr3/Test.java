@@ -46,9 +46,24 @@ public class Test
     LR1.log.setLevel( Log.all);
     
     String cfg =
-  		"A := A + A;" +
-  		"A := A * A;" +
-  		"A := 1;";
+      "E := E + E;" +
+      "E := E - E;" +
+  		"E := E * E;" +
+      "E := E / E;" +
+      "E := E ^ E;" +
+      "E := E > > E;"+
+      "E := E < < E;"+
+      "E := E m o d E;"+
+      "E := ( E );"+
+      "E := B10;"+
+      "E := B16;"+
+      "B10 := [0-9];"+
+      "B10 := B10 [0-9];"+
+      "B16 := 0 x B16;"+
+      "B16 := [0-9];"+
+      "B16 := [a-f];"+
+      "B16 := [A-F];"+
+      "";
     
     Test test = new Test();
     Grammar grammar = test.parse( cfg);

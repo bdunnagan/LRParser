@@ -1,34 +1,42 @@
 package org.xidget.parser.lrk;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class CompiledState
 {
-  public CompiledState()
+  public CompiledState( Locus locus)
   {
-    transitions = new ArrayList<Transition>();
+    this.locus = locus;
+    expectMap = new LinkedHashMap<SymbolString, CompiledState>();
+    pushMap = new LinkedHashMap<SymbolString, CompiledState>();
+    popMap = new LinkedHashMap<SymbolString, Integer>();
+    resumeMap = new LinkedHashMap<SymbolString, CompiledState>();
   }
 
-  public void addTransition( SymbolString string, CompiledState state, Rule production)
+  public void addExpect( SymbolString la, CompiledState next)
   {
-    // if terminals in string are matched then,
-    //   1. consume consecutive terminals only
-    //   2. end on first reduction
-    
-    Transition transition = new Transition();
-    transition.string = string;
-    transition.state = state;
-    transition.production = production;
-    transitions.add( transition);
+    expectMap.put( la, next);
   }
   
-  public static class Transition
+  public void addPush( SymbolString la, CompiledState next)
   {
-    public SymbolString string;
-    public CompiledState state;
-    public Rule production;
+    pushMap.put( la, next);
+  }
+  
+  public void addPop( SymbolString la, int depth)
+  {
+    popMap.put( la, depth);
+  }
+  
+  public void addResume( SymbolString la, CompiledState next)
+  {
+    resumeMap.put( la, next);
   }
 
-  private List<Transition> transitions;
+  private Locus locus;
+  private Map<SymbolString, CompiledState> expectMap;
+  private Map<SymbolString, CompiledState> pushMap;
+  private Map<SymbolString, Integer> popMap;
+  private Map<SymbolString, CompiledState> resumeMap;
 }
