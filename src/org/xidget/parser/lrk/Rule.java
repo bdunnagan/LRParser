@@ -20,9 +20,9 @@ public class Rule extends ArrayList<Symbol>
     this.symbol = symbol;
   }
   
-  public String getName()
+  public Symbol getSymbol()
   {
-    return symbol.getName(); 
+    return symbol; 
   }
   
   public boolean isProduction()
@@ -34,7 +34,7 @@ public class Rule extends ArrayList<Symbol>
   public String toString()
   {
     StringBuilder sb = new StringBuilder();
-    sb.append( getName());
+    sb.append( symbol.getName());
     sb.append( " := ");
     for( int i=0; i<size(); i++)
     {

@@ -1,86 +1,84 @@
 package org.xidget.parser.lrk;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 public class Locus
 {
-  public Locus( Locus parent, Rule rule, int pos)
+  public Locus( Rule rule, int pos)
   {
-    this.parent = parent;
     this.rule = rule;
     this.pos = pos;
   }
-  
-  public Locus nextOver()
+
+  public List<Locus> next()
   {
-    if ( (pos+1) < rule.size())
+    Symbol symbol = getSymbol();
+    if ( symbol == null)
     {
-      return new Locus( parent, rule, pos+1);
+      // Since we are at the end of this rule, find all loci in the grammar
+      // immediately following where this rule is used. The lookahead from
+      // these loci will decide which reduction is chosen, and how many states
+      // to pop off the stack.
+      return rule.getGrammar().usage( rule.getSymbol());
     }
-    else if ( parent != null)
+    else if ( symbol.isTerminal())
     {
-      return parent.nextOver();
+      return Collections.singletonList( new Locus( rule, pos+1));
     }
     else
     {
-      return null;
+      List<Locus> loci = new ArrayList<Locus>();
+      for( Rule match: rule.getGrammar().lookup( symbol))
+      {
+        if ( match != rule)
+          loci.add( new Locus( match, 0));
+      }
+      return loci;
     }
   }
   
-  public List<Locus> nextInto()
+  /**
+   * @return Returns a list of all terminals seen from this locus.
+   */
+  public Set<Symbol> terminals()
   {
-    Symbol symbol = getSymbol();
-    if ( symbol.isTerminal())
+    Set<Symbol> symbols = new HashSet<Symbol>();
+    
+    Deque<Locus> stack = new ArrayDeque<Locus>();
+    stack.push( this);
+    while( !stack.isEmpty())
     {
-      if ( (pos+1) < rule.size())
+      Locus locus = stack.pop();
+      Symbol symbol = locus.getSymbol();
+      if ( symbol == null || symbol.isEmpty())
       {
-        return Collections.singletonList( new Locus( parent, rule, pos+1));
+        for( Locus next: locus.next())
+          stack.push( next);
       }
-      else if ( parent != null)
+      else if ( symbol.isTerminal())
       {
-        return parent.nextInto();
+        symbols.add( symbol);
       }
       else
       {
-        return null;
+        for( Rule match: rule.getGrammar().lookup( symbol))
+        {
+          if ( match != rule)
+          {
+            stack.push( new Locus( match, 0));
+          }
+        }
       }
     }
-    else
-    {
-      List<Locus> nextLoci = new ArrayList<Locus>();
-      for( Rule followRule: rule.getGrammar().lookup( symbol))
-      {
-        if ( followRule != rule)
-          nextLoci.add( new Locus( this, followRule, 0));
-      }
-      return nextLoci;
-    }
-  }
-  
-  public Locus getRoot()
-  {
-    if ( parent == null) return this;
-    return parent.getRoot();
-  }
-  
-  public int getDepth()
-  {
-    int depth = 0;
-    Locus locus = parent;
-    while( locus != null)
-    {
-      locus = locus.getParent();
-      depth++;
-    }
-    return depth;
-  }
-  
-  public Locus getParent()
-  {
-    return parent;
+    
+    return symbols;
   }
   
   public Rule getRule()
@@ -100,25 +98,76 @@ public class Locus
   
   public Symbol getSymbol()
   {
-    return rule.get( pos);
+    return (pos < rule.size())? rule.get( pos): null;
   }
 
   @Override
   public String toString()
   {
     StringBuilder sb = new StringBuilder();
-    sb.append( rule.getName());
+    sb.append( rule.getSymbol().getName());
     sb.append( " := ");
-    for( int i=0; i<rule.size(); i++)
+    for( int i=0; i<=rule.size(); i++)
     {
       if ( i > 0) sb.append( ' ');
       if ( i == pos) sb.append( '•');
-      sb.append( rule.get( i));
+      if ( i < rule.size()) sb.append( rule.get( i));
     }
     return sb.toString();
   }
 
-  private Locus parent;
   private Rule rule;
   private int pos;
+  
+  public static void main( String[] args) throws Exception
+  {
+    Grammar grammar = new Grammar();
+    
+    // 1. S := A
+    // 2. A := x B z
+    // 3. B := y
+    // 4. B := y y
+    
+    Symbol sS = new Symbol( "S");
+    Symbol sA = new Symbol( "A");
+    Symbol sB = new Symbol( "B");
+    Symbol w = new Symbol( "w", 'w');
+    Symbol x = new Symbol( "x", 'x');
+    Symbol y = new Symbol( "y", 'y');
+    Symbol z = new Symbol( "z", 'z');
+
+    Rule r1 = new Rule(); 
+    Rule r2 = new Rule(); 
+    Rule r3 = new Rule(); 
+    Rule r4 = new Rule();
+    
+    r1.add( sA);
+    r2.add( x); r2.add( sB); r2.add( z);
+    r3.add( y);
+    r4.add( w);
+
+    grammar.addRule( sS, r1);
+    grammar.addRule( sA, r2);
+    grammar.addRule( sB, r3);
+    grammar.addRule( sB, r4);
+    
+    Deque<Locus> stack = new ArrayDeque<Locus>();
+    stack.push( new Locus( grammar.getStart(), 0));
+    while( !stack.isEmpty())
+    {
+      Locus locus = stack.pop();
+      
+      System.out.printf( "%-30s ", locus);
+      for( Symbol symbol: locus.terminals())
+        System.out.printf( "%s ", symbol);
+      System.out.println();
+      
+      List<Locus> nextLoci = locus.next();
+      if ( nextLoci != null)
+      {
+        for( Locus nextLocus: nextLoci)
+          stack.push( nextLocus);
+      }
+    }
+  }
 }

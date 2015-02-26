@@ -22,7 +22,7 @@ public class LRk
   public void compile()
   {
     Deque<Locus> stack = new ArrayDeque<Locus>();
-    stack.push( new Locus( null, grammar.getStart(), 0));
+    stack.push( new Locus( grammar.getStart(), 0));
     while( !stack.isEmpty())
     {
       Locus locus = stack.pop();
