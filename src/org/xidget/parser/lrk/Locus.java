@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-
 public class Locus
 {
   public Locus( Rule rule, int pos)
@@ -27,6 +26,10 @@ public class Locus
       // these loci will decide which reduction is chosen, and how many states
       // to pop off the stack.
       return rule.getGrammar().usage( rule.getSymbol());
+    }
+    else if ( symbol.isStreamEnd())
+    {
+      return Collections.emptyList();
     }
     else if ( symbol.isTerminal())
     {
@@ -61,6 +64,9 @@ public class Locus
       {
         for( Locus next: locus.next())
           stack.push( next);
+      }
+      else if ( symbol.isStreamEnd())
+      {
       }
       else if ( symbol.isTerminal())
       {
@@ -124,32 +130,49 @@ public class Locus
     Grammar grammar = new Grammar();
     
     // 1. S := A
-    // 2. A := x B z
-    // 3. B := y
-    // 4. B := y y
+    // 2. A := x B q
+    // 3. A := x B p
+    // 4. B := y
+    // 5. B := ø C
+    // 6. C := D
+    // 7. D := w w w
     
     Symbol sS = new Symbol( "S");
     Symbol sA = new Symbol( "A");
     Symbol sB = new Symbol( "B");
+    Symbol sC = new Symbol( "C");
+    Symbol sD = new Symbol( "D");
     Symbol w = new Symbol( "w", 'w');
     Symbol x = new Symbol( "x", 'x');
     Symbol y = new Symbol( "y", 'y');
-    Symbol z = new Symbol( "z", 'z');
+    Symbol q = new Symbol( "q", 'q');
+    Symbol p = new Symbol( "p", 'p');
+    Symbol empty = new Symbol( "ø", 'ø', true, false);
+    Symbol end = new Symbol( "¬", '¬', false, true);
 
     Rule r1 = new Rule(); 
     Rule r2 = new Rule(); 
     Rule r3 = new Rule(); 
     Rule r4 = new Rule();
+    Rule r5 = new Rule();
+    Rule r6 = new Rule();
+    Rule r7 = new Rule();
     
-    r1.add( sA);
-    r2.add( x); r2.add( sB); r2.add( z);
-    r3.add( y);
-    r4.add( w);
+    r1.add( sA); r1.add( end);
+    r2.add( x); r2.add( sB); r2.add( p);
+    r3.add( x); r3.add( sB); r3.add( q);
+    r4.add( y);
+    r5.add( empty); r5.add( sC);
+    r6.add( sD);
+    r7.add( w); r7.add( w); r7.add( w);
 
     grammar.addRule( sS, r1);
     grammar.addRule( sA, r2);
-    grammar.addRule( sB, r3);
+    grammar.addRule( sA, r3);
     grammar.addRule( sB, r4);
+    grammar.addRule( sB, r5);
+    grammar.addRule( sC, r6);
+    grammar.addRule( sD, r7);
     
     Deque<Locus> stack = new ArrayDeque<Locus>();
     stack.push( new Locus( grammar.getStart(), 0));
