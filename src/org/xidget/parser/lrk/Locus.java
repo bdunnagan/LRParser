@@ -1,5 +1,9 @@
 package org.xidget.parser.lrk;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 
 public class Locus
 {
@@ -10,7 +14,7 @@ public class Locus
     this.pos = pos;
   }
   
-  public Locus next()
+  public Locus nextOver()
   {
     if ( (pos+1) < rule.size())
     {
@@ -18,11 +22,41 @@ public class Locus
     }
     else if ( parent != null)
     {
-      return parent.next();
+      return parent.nextOver();
     }
     else
     {
       return null;
+    }
+  }
+  
+  public List<Locus> nextInto()
+  {
+    Symbol symbol = getSymbol();
+    if ( symbol.isTerminal())
+    {
+      if ( (pos+1) < rule.size())
+      {
+        return Collections.singletonList( new Locus( parent, rule, pos+1));
+      }
+      else if ( parent != null)
+      {
+        return parent.nextInto();
+      }
+      else
+      {
+        return null;
+      }
+    }
+    else
+    {
+      List<Locus> nextLoci = new ArrayList<Locus>();
+      for( Rule followRule: rule.getGrammar().lookup( symbol))
+      {
+        if ( followRule != rule)
+          nextLoci.add( new Locus( this, followRule, 0));
+      }
+      return nextLoci;
     }
   }
   
