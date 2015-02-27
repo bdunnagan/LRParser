@@ -16,14 +16,20 @@ public class LRk
   {
     this.grammar = grammar;
     this.k = k;
-    this.states = new HashMap<Locus, CompiledState>();
+    this.states = new HashMap<Locus, LRState>();
   }
 
   public void compile()
   {
-    // 1. create a state for this locus
-    // 2. for each next locus, find lookahead
-    // 3. next locus 
+    // 1. create one provisional state for each locus
+    // 2. for each state transition, capture lookbehind, as well as, lookahead
+    // 3a. resolve conflicts by splitting states, using lookbehind to update references. 
+    //    NOTE: Splitting states can/will create conflicts in states that 
+    //          reference the state being split.  Therefore, splitting a state
+    //          is a recursive process.
+    // 3b. if conflict resolution proceeds from the start state, breadth-wise through 
+    //     the graph, then LR(k) lookahead can be used to split the next state.  
+
     
     Deque<Locus> stack = new ArrayDeque<Locus>();
     stack.push( new Locus( grammar.getStart(), 0));
@@ -37,16 +43,16 @@ public class LRk
   
   private void createState( Locus locus, Deque<Locus> stack)
   {
-    CompiledState state = getStateForLocus( locus);
+    LRState state = getStateForLocus( locus);
     
   }
   
-  private CompiledState getStateForLocus( Locus locus)
+  private LRState getStateForLocus( Locus locus)
   {
-    CompiledState state = states.get( locus);
+    LRState state = states.get( locus);
     if ( state == null)
     {
-      state = new CompiledState( locus);
+      state = new LRState( locus);
       states.put( locus, state);
     }
     return state;
@@ -54,7 +60,7 @@ public class LRk
   
   private Grammar grammar;
   private int k;
-  private Map<Locus, CompiledState> states;
+  private Map<Locus, LRState> states;
   
   public static void main( String[] args) throws Exception
   {
