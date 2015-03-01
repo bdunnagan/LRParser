@@ -2,9 +2,9 @@ package org.xidget.parser.lrk.examples;
 
 import org.xidget.parser.lrk.Grammar;
 
-public class RecursiveSLRGrammar extends Grammar
+public class RecursiveLR1 extends Grammar
 {
-  public RecursiveSLRGrammar()
+  public RecursiveLR1()
   {
     addTestRule( "S := A");
     addTestRule( "A := A y");

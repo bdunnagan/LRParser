@@ -2,9 +2,9 @@ package org.xidget.parser.lrk.examples;
 
 import org.xidget.parser.lrk.Grammar;
 
-public class SimpleLR2Grammar extends Grammar
+public class SimpleLR2 extends Grammar
 {
-  public SimpleLR2Grammar()
+  public SimpleLR2()
   {
     addTestRule( "S := A");
     addTestRule( "A := x B p");

@@ -2,14 +2,13 @@ package org.xidget.parser.lrk;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import org.xidget.parser.lrk.examples.RecursiveSLRGrammar;
+import org.xidget.parser.lrk.examples.Wikipedia;
 
 public class TraversalAlgo
 {
@@ -35,11 +34,7 @@ public class TraversalAlgo
       // to pop off the stack.
       return grammar.usage( rule.getSymbol());
     }
-    else if ( locus.isStreamEnd())
-    {
-      return Collections.emptyList();
-    }
-    else if ( locus.isTerminal())
+    else if ( locus.isTerminal() || locus.isStreamEnd())
     {
       return Collections.singletonList( locus.nextInRule());
     }
@@ -150,15 +145,20 @@ public class TraversalAlgo
    */
   public static List<Locus> findTerminalsInGrammar( Locus start)
   {
-    Set<Locus> loci = new LinkedHashSet<Locus>();
+    Set<Locus> visited = new LinkedHashSet<Locus>();
+    List<Locus> terminals = new ArrayList<Locus>();
     Deque<Locus> stack = new ArrayDeque<Locus>();
     stack.push( start);
     while( !stack.isEmpty())
     {
       Locus locus = stack.pop();
-      if ( locus.isTerminal() && !locus.isEmpty())
+      
+      if ( !visited.add( locus))
+        continue;
+      
+      if ( (locus.isTerminal() && !locus.isEmpty()) || locus.isStreamEnd())
       {
-        loci.add( locus);
+        terminals.add( locus);
       }
       else
       {
@@ -166,7 +166,7 @@ public class TraversalAlgo
           stack.push( nextLocus);
       }
     }
-    return new ArrayList<Locus>( loci);
+    return terminals;
   }
   
   /**
@@ -271,6 +271,7 @@ public class TraversalAlgo
           sb.append( terminal.getSymbol());
           sb.append( ' ');
         }
+        sb.append( ' ');
       }
       sb.append( '\n');
       
@@ -287,12 +288,12 @@ public class TraversalAlgo
   
   public static void main( String[] args) throws Exception
   {
-    RecursiveSLRGrammar grammar = new RecursiveSLRGrammar();
+    Grammar grammar = new Wikipedia();
     Locus locus = new Locus( grammar.getStart(), 0);
     
     System.out.println( dumpPaths( "", locus));
     
-    for( List<Locus> la: findTerminalsInGrammar( locus, 2))
+    for( List<Locus> la: findTerminalsInGrammar( locus, 1))
     {
       for( Locus laLocus: la)
         System.out.println( laLocus);
