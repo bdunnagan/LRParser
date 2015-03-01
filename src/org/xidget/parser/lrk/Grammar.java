@@ -26,6 +26,10 @@ public class Grammar
       {
         rule.add( Symbol.empty);
       }
+      else if ( str.equals( Symbol.end.toString()))
+      {
+        rule.add( Symbol.end);
+      }
       else
       {
         Symbol symbol = new Symbol( str);
@@ -43,10 +47,8 @@ public class Grammar
     if ( start == null)
     {
       start = rule;
-//      start = new Rule();
-//      start.setGrammar( this);
-//      start.setSymbol( new Symbol( "START"));
-//      start.add( symbol);
+      if ( !rule.get( rule.size() - 1).equals( Symbol.end))
+        rule.add( Symbol.end);
     }
     
     rule.setGrammar( this);

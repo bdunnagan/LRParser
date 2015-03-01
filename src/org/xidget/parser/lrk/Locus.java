@@ -42,7 +42,7 @@ public class Locus
   
   public List<List<Locus>> lookahead( int k)
   {
-    return TraversalAlgo.lookahead( this, k);
+    return TraversalAlgo.findTerminalsInGrammar( this, k);
   }
   
   public Rule getRule()

@@ -2,6 +2,7 @@ package org.xidget.parser.lrk;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
@@ -93,49 +94,18 @@ public class TraversalAlgo
    * nextInGrammar( Locus) until terminals are found for each path through the
    * grammar starting at this locus.
    * @param locus The starting locus.
-   * @param result Found terminals are added to this set.
+   * @param k The number of terminals to find on each path.
+   * @return Returns the set of terminals.
    */
-  public static void findTerminalsInGrammar( Locus locus, Set<Symbol> result)
+  public static List<List<Locus>> findTerminalsInGrammar( Locus locus, int k)
   {
-    Deque<Locus> stack = new ArrayDeque<Locus>();
-    stack.push( locus);
-    while( !stack.isEmpty())
-    {
-      locus = stack.pop();
-      if ( locus.isTerminal() && !locus.isEmpty())
-      {
-        result.add( locus.getSymbol());
-      }
-      else
-      {
-        for( Locus nextLocus: locus.nextInGrammar())
-          stack.push( nextLocus);
-      }
-    }
-  }
-  
-  /**
-   * Step through the grammar starting at the specified locus until each possible
-   * path contains k terminals.  This is lr(k) lookahead.
-   * @param locus The starting locus.
-   * @param k The number of terminals to find.
-   * @return Returns the list of paths through the grammar.
-   */
-  public static List<List<Locus>> lookahead( Locus locus, int k)
-  {
-    final class Item
+    class Item
     {
       public Item( Locus locus, List<Locus> path, int k)
       {
         this.locus = locus;
-        this.path = path;
+        this.path = new ArrayList<Locus>( path);
         this.k = k;
-      }
-      
-      public Item( Locus locus, Item item)
-      {
-        this.path = new ArrayList<Locus>( item.path);
-        this.k = item.k;
       }
       
       public Locus locus;
@@ -144,41 +114,59 @@ public class TraversalAlgo
     }
     
     List<List<Locus>> paths = new ArrayList<List<Locus>>();
-    Set<Symbol> symbols = new HashSet<Symbol>();
-    
-    Item item = new Item( locus, new ArrayList<Locus>( k), 0);
     
     Deque<Item> stack = new ArrayDeque<Item>();
-    stack.push( item);
+    stack.push( new Item( locus, new ArrayList<Locus>( k * 3), 0));
     while( !stack.isEmpty())
     {
-      item = stack.pop();
+      Item item = stack.pop();
       
-      if ( item.k == k) continue;
-      
-      if ( item.locus.isTerminal() && !item.locus.isEmpty())
+      if ( item.k == k)
       {
-        if ( symbols.add( item.locus.getSymbol()))
-        {
-          item.k++;
-        }
+        paths.add( item.path);
       }
-      
-      List<Locus> nextLoci = item.locus.nextInGrammar();
-      if ( nextLoci != null)
+      else
       {
-        for( int i=nextLoci.size()-1; i>=0; i--)
+        for( Locus terminal: findTerminalsInGrammar( item.locus))
         {
-          Locus nextLocus = nextLoci.get( i);
-          Item newItem = new Item( nextLocus, item);
-          if ( nextLocus.isEmpty()) continue;
-          newItem.path.add( nextLocus);
-          stack.push( newItem);
+          List<Locus> newPath = new ArrayList<Locus>( item.path);
+          newPath.add( terminal);
+          for( Locus nextLocus: nextInGrammar( terminal))
+            stack.push( new Item( nextLocus, newPath, item.k+1));
         }
       }
     }
-
+    
     return paths;
+  }
+  
+  /**
+   * Find the terminals in the grammar.  If the current locus contains a terminal,
+   * then it is returned.  Otherwise, this method is equivalent to calling
+   * nextInGrammar( Locus) until terminals are found for each path through the
+   * grammar starting at this locus.
+   * @param start The starting locus.
+   * @return Returns the locus of each terminal found.
+   */
+  public static List<Locus> findTerminalsInGrammar( Locus start)
+  {
+    Set<Locus> loci = new LinkedHashSet<Locus>();
+    Deque<Locus> stack = new ArrayDeque<Locus>();
+    stack.push( start);
+    while( !stack.isEmpty())
+    {
+      Locus locus = stack.pop();
+      if ( locus.isTerminal() && !locus.isEmpty())
+      {
+        loci.add( locus);
+      }
+      else
+      {
+        for( Locus nextLocus: locus.nextInGrammar())
+          stack.push( nextLocus);
+      }
+    }
+    return new ArrayList<Locus>( loci);
   }
   
   /**
@@ -275,10 +263,14 @@ public class TraversalAlgo
         continue; 
       
       sb.append( String.format( "%-60s  ", item.indent.toString() + item.locus));
-      for( Locus terminalLocus: findTerminalsInGrammar( item.locus))
+      List<List<Locus>> paths = findTerminalsInGrammar( item.locus, 1);
+      for( List<Locus> terminals: paths)
       {
-        sb.append( terminalLocus.getSymbol());
-        sb.append( ' ');
+        for( Locus terminal: terminals)
+        {
+          sb.append( terminal.getSymbol());
+          sb.append( ' ');
+        }
       }
       sb.append( '\n');
       
@@ -300,7 +292,7 @@ public class TraversalAlgo
     
     System.out.println( dumpPaths( "", locus));
     
-    for( List<Locus> la: lookahead( locus, 1))
+    for( List<Locus> la: findTerminalsInGrammar( locus, 2))
     {
       for( Locus laLocus: la)
         System.out.println( laLocus);
