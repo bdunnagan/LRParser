@@ -1,23 +1,18 @@
 package org.xidget.parser.lrk;
 
-public class Symbol implements Comparable<Symbol>
+public class Symbol
 {
+  public static Symbol empty = new Symbol( "ø", true, false);
+  public static Symbol end = new Symbol( "¬", false, true);
+  
   public Symbol( String name)
   {
-    this.name = name;
-    this.isTerminal = false;
+    this( name, false, false);
   }
   
-  public Symbol( String name, long value)
-  {
-    this( name, value, false, false);
-  }
-  
-  public Symbol( String name, long value, boolean isEmpty, boolean isStreamEnd)
+  private Symbol( String name, boolean isEmpty, boolean isStreamEnd)
   {
     this.name = name;
-    this.value = value;
-    this.isTerminal = true;
     this.isEmpty = isEmpty;
     this.isStreamEnd = isStreamEnd;
   }
@@ -25,11 +20,6 @@ public class Symbol implements Comparable<Symbol>
   public String getName()
   {
     return name;
-  }
-  
-  public boolean isTerminal()
-  {
-    return isTerminal;
   }
   
   public boolean isEmpty()
@@ -43,21 +33,16 @@ public class Symbol implements Comparable<Symbol>
   }
 
   @Override
-  public int compareTo( Symbol symbol)
+  public int hashCode()
   {
-    if ( value < symbol.value) return -1;
-    if ( value > symbol.value) return 1;
-    return 0;
+    return name.hashCode();
   }
 
   @Override
   public boolean equals( Object object)
   {
     Symbol symbol = (Symbol)object;
-    return value == symbol.value &&
-        isEmpty == symbol.isEmpty &&
-        isTerminal == symbol.isTerminal &&
-        isStreamEnd == symbol.isStreamEnd;
+    return name.equals( symbol.name);
   }
   
   @Override
@@ -67,8 +52,6 @@ public class Symbol implements Comparable<Symbol>
   }
 
   private String name;
-  private long value;
   private boolean isEmpty;
-  private boolean isTerminal;
   private boolean isStreamEnd;
 }

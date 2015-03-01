@@ -14,6 +14,28 @@ public class Grammar
     order = new ArrayList<Rule>();
   }
   
+  public Rule addTestRule( String testSpec)
+  {
+    String[] parts = testSpec.split( "\\s*:=\\s*");
+    String nameStr = parts[ 0].trim();
+    Symbol name = new Symbol( nameStr);
+    Rule rule = new Rule();
+    for( String str: parts[ 1].trim().split( "\\s+"))
+    {
+      if ( str.equals( Symbol.empty.toString()))
+      {
+        rule.add( Symbol.empty);
+      }
+      else
+      {
+        Symbol symbol = new Symbol( str);
+        rule.add( symbol);
+      }
+    }
+    addRule( name, rule);
+    return rule;
+  }
+  
   public void addRule( Symbol symbol, Rule rule)
   {
     uses = null;
@@ -46,6 +68,11 @@ public class Grammar
     return start;
   }
   
+  public boolean isTerminal( Symbol symbol)
+  {
+    return (symbol != null)? !map.containsKey( symbol): false;
+  }
+  
   public List<Rule> lookup( Symbol symbol)
   {
     List<Rule> rules = map.get( symbol);
@@ -72,7 +99,7 @@ public class Grammar
       for( int i=0; i<rule.size(); i++)
       {
         Symbol symbol = rule.get( i);
-        if ( !symbol.isTerminal())
+        if ( map.containsKey( symbol))
         {
           List<Locus> list = uses.get( symbol);
           if ( list == null)

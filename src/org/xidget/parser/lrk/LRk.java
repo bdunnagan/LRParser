@@ -2,13 +2,10 @@ package org.xidget.parser.lrk;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class LRk
 {
@@ -16,10 +13,10 @@ public class LRk
   {
     this.grammar = grammar;
     this.k = k;
-    this.states = new HashMap<Locus, LRState>();
+    this.states = new LinkedHashMap<Locus, LRState>();
   }
 
-  public void compile()
+  public List<LRState> compile()
   {
     // 1. create one provisional state for each locus
     // 2. for each state transition, capture lookbehind, as well as, lookahead
@@ -36,24 +33,58 @@ public class LRk
     while( !stack.isEmpty())
     {
       Locus locus = stack.pop();
-      System.out.printf( "LRk pop %s\n", locus);
-      createState( locus, stack);
+      System.out.printf( "Visiting: %s\n", locus);
+      
+      if ( states.containsKey( locus))
+        continue;
+
+      for( Locus nextKernel: locus.nextKernelsInGrammar())
+        stack.push( nextKernel);
+      
+      LRState state = getStateForKernel( locus);
+      
+      List<List<Locus>> lookaheads = locus.lookahead( k);
+      for( List<Locus> lookahead: lookaheads)
+      {
+        if ( lookahead.size() == 0)
+        {
+          state.accept( lookahead);
+        }
+        else
+        {
+          Locus nextLocus = lookahead.get( 0);
+          if ( nextLocus.isEnd() || nextLocus.isStreamEnd())
+          {
+            state.pop( lookahead);
+            
+            if ( lookahead.size() > 1)
+            {
+              LRState pushState = getStateForKernel( lookahead.get( 1).prevInRule());
+              pushState.resume( lookahead.subList( 1, lookahead.size()));
+            }
+          }
+          else if ( nextLocus.isTerminal())
+          {
+            state.expect( lookahead);
+          }
+          else
+          {
+            state.push( lookahead);
+          }
+        }
+      }
     }
-  }
-  
-  private void createState( Locus locus, Deque<Locus> stack)
-  {
-    LRState state = getStateForLocus( locus);
     
+    return new ArrayList<LRState>( states.values());
   }
   
-  private LRState getStateForLocus( Locus locus)
+  private LRState getStateForKernel( Locus kernel)
   {
-    LRState state = states.get( locus);
+    LRState state = states.get( kernel);
     if ( state == null)
     {
-      state = new LRState( locus);
-      states.put( locus, state);
+      state = new LRState( kernel);
+      states.put( kernel, state);
     }
     return state;
   }
@@ -64,31 +95,5 @@ public class LRk
   
   public static void main( String[] args) throws Exception
   {
-    Grammar grammar = new Grammar();
-    
-    Symbol word = new Symbol( "word", 1);
-    Symbol space = new Symbol( "space", 2);
-    Symbol digit = new Symbol( "digit", 3);
-    
-    // A := word
-    Symbol sA = new Symbol( "A");
-    Rule rA1 = new Rule();
-    rA1.add( word);
-    grammar.addRule( sA, rA1); 
-    
-    // A := digit
-    Rule rA2 = new Rule();
-    rA2.add( digit);
-    grammar.addRule( sA, rA2);
-    
-    // A := A space A
-    Rule rA3 = new Rule();
-    rA3.add( sA);
-    rA3.add( space);
-    rA3.add( sA);
-    grammar.addRule( sA, rA3);
-    
-    LRk lrk = new LRk( grammar, 1);
-    lrk.compile();
   }
 }  
