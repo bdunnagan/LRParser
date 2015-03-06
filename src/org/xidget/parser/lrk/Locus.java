@@ -1,6 +1,8 @@
 package org.xidget.parser.lrk;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class Locus
 {
@@ -14,8 +16,25 @@ public class Locus
     this.parent = parent;
     this.rule = rule;
     this.pos = pos;
+    this.visited = (parent != null)? new HashSet<Rule>( parent.visited): new HashSet<Rule>();
   }
 
+  public Locus getParent()
+  {
+    return parent;
+  }
+  
+  public int getDepth()
+  {
+    int depth = 0;
+    while( parent != null)
+    {
+      depth++;
+      parent = parent.getParent();
+    }
+    return depth;
+  }
+  
   public Locus previousInGrammar()
   {
     Locus previous = prevInRule();
@@ -27,7 +46,12 @@ public class Locus
   {
     Locus next = nextInRule();
     if ( next != null) return next;
-    return (parent != null)? parent.nextInRule(): null;
+    if ( parent != null)
+    {
+      parent.visited.addAll( visited);
+      return parent.nextInRule();
+    }
+    return null;
   }
   
   /**
@@ -86,6 +110,11 @@ public class Locus
     Symbol symbol = getSymbol();
     return symbol != null && symbol.isStreamEnd();
   }
+  
+  public boolean visit( Rule rule)
+  {
+    return visited.add( rule);
+  }
 
   @Override
   public int hashCode()
@@ -130,4 +159,5 @@ public class Locus
   private Locus parent;
   private Rule rule;
   private int pos;
+  private Set<Rule> visited;
 }

@@ -2,23 +2,26 @@ package org.xidget.parser.lrk;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import org.xidget.parser.lrk.examples.SimpleLR2;
+import org.xidget.parser.lrk.examples.*;
 
 public class TraversalAlgo
 {
+  /**
+   * Traverses the grammar until terminals are found on all paths starting
+   * with the specified locus.  The loci that are returned are the leaves
+   * of the paths, and the paths can be reconstructed by walking the ancestors
+   * of each leaf.
+   * @param start The starting locus.
+   * @return Returns the terminals found on each path.
+   */
   public static List<Locus> nextTerminalsInGrammar( Locus start)
   {
     List<Locus> leaves = new ArrayList<Locus>();
-    Grammar grammar = start.getRule().getGrammar();
-    
-    Map<Locus, Set<Rule>> visitedByPath = new HashMap<Locus, Set<Rule>>();
-    visitedByPath.put( start, new HashSet<Rule>());
     
     Deque<Locus> stack = new ArrayDeque<Locus>();
     stack.push( start);
@@ -30,28 +33,17 @@ public class TraversalAlgo
       if ( locus.isEnd() || locus.isEmpty())
       {
         Locus nextInGrammar = locus.nextInGrammar();
-        if ( nextInGrammar != null) 
-        {
-          visitedByPath.put( nextInGrammar, visitedByPath.remove( locus));
-          stack.push( nextInGrammar);
-        }
+        if ( nextInGrammar != null) stack.push( nextInGrammar);
       }
-      else if ( locus.isTerminal() || locus.isStreamEnd())
+      else if ( locus.isTerminal())
       {
         leaves.add( locus);
       }
       else
       {
-        Set<Rule> visited = visitedByPath.remove( locus);
-        for( Rule rule: grammar.lookup( locus.getSymbol()))
-        {
-          if ( visited.add( rule))
-          {
-            Locus child = new Locus( locus, rule, 0);
-            visitedByPath.put( child, new HashSet<Rule>( visited));
-            stack.push( child);
-          }
-        }
+        for( Rule rule: start.getRule().getGrammar().lookup( locus.getSymbol()))
+          if ( locus.visit( rule))
+            stack.push( new Locus( locus, rule, 0));
       }
     }
     
@@ -72,19 +64,37 @@ public class TraversalAlgo
   
   public static void print( String indent, Locus start)
   {
-    for( Locus locus: nextTerminalsInGrammar( start))
+    Deque<Locus> stack = new ArrayDeque<Locus>();
+    stack.push( start);
+    while( !stack.isEmpty())
     {
-      System.out.printf( "%s%s\n", indent, leafToPath( locus));
-      locus = locus.nextInGrammar();
-      if ( locus != null) print( indent+"  ", locus);
+      Locus locus = stack.pop();
+      
+      char[] pad = new char[ locus.getDepth() * 2];
+      Arrays.fill( pad, ' ');
+      System.out.printf( "%s%s\n", new String( pad), locus);
+      
+      if ( locus.isTerminal())
+      {
+        Locus nextLocus = locus.nextInGrammar();
+        if ( nextLocus != null) 
+          stack.push( nextLocus);
+      }
+      else
+      {
+        for( Locus terminal: nextTerminalsInGrammar( locus))
+          stack.push( terminal);
+      }
     }
   }
   
   public static void main( String[] args) throws Exception
   {
-    Grammar grammar = new SimpleLR2();
+//    Grammar grammar = new SimpleLR2();
 //    Grammar grammar = new RecursiveLR1();
+    Grammar grammar = new RecursiveLR2();
     Locus start = new Locus( grammar.getStart());
+    //System.out.println( nextTerminalsInGrammar( start));
     print( "", start);
   }
 }
