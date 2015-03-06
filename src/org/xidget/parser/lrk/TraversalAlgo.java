@@ -30,6 +30,9 @@ public class TraversalAlgo
     {
       Locus locus = stack.pop();
       
+      if ( !locus.visit())
+        continue;
+      
       if ( locus.isEnd() || locus.isEmpty())
       {
         Locus nextInGrammar = locus.nextInGrammar();
@@ -42,8 +45,7 @@ public class TraversalAlgo
       else
       {
         for( Rule rule: start.getRule().getGrammar().lookup( locus.getSymbol()))
-          if ( locus.visit( rule))
-            stack.push( new Locus( locus, rule, 0));
+          stack.push( new Locus( locus, rule, 0));
       }
     }
     
@@ -70,15 +72,16 @@ public class TraversalAlgo
     {
       Locus locus = stack.pop();
       
-      char[] pad = new char[ locus.getDepth() * 2];
-      Arrays.fill( pad, ' ');
-      System.out.printf( "%s%s\n", new String( pad), locus);
+      System.out.printf( String.format( "%%%ds%%s\n", locus.getDepth()*2+1), "", locus);
       
       if ( locus.isTerminal())
       {
-        Locus nextLocus = locus.nextInGrammar();
-        if ( nextLocus != null) 
-          stack.push( nextLocus);
+        if ( !locus.isStreamEnd())
+        {
+          Locus nextLocus = locus.nextInGrammar();
+          if ( nextLocus != null) 
+            stack.push( nextLocus);
+        }
       }
       else
       {
@@ -92,7 +95,8 @@ public class TraversalAlgo
   {
 //    Grammar grammar = new SimpleLR2();
 //    Grammar grammar = new RecursiveLR1();
-    Grammar grammar = new RecursiveLR2();
+//    Grammar grammar = new RecursiveLR2();
+    Grammar grammar = new Wikipedia();
     Locus start = new Locus( grammar.getStart());
     //System.out.println( nextTerminalsInGrammar( start));
     print( "", start);

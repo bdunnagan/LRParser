@@ -16,7 +16,7 @@ public class Locus
     this.parent = parent;
     this.rule = rule;
     this.pos = pos;
-    this.visited = (parent != null)? new HashSet<Rule>( parent.visited): new HashSet<Rule>();
+    this.visited = (parent != null)? new HashSet<Locus>( parent.visited): new HashSet<Locus>();
   }
 
   public Locus getParent()
@@ -27,10 +27,11 @@ public class Locus
   public int getDepth()
   {
     int depth = 0;
-    while( parent != null)
+    Locus locus = parent;
+    while( locus != null)
     {
       depth++;
-      parent = parent.getParent();
+      locus = locus.getParent();
     }
     return depth;
   }
@@ -111,9 +112,9 @@ public class Locus
     return symbol != null && symbol.isStreamEnd();
   }
   
-  public boolean visit( Rule rule)
+  public boolean visit()
   {
-    return visited.add( rule);
+    return visited.add( this);
   }
 
   @Override
@@ -134,11 +135,11 @@ public class Locus
   {
     StringBuilder sb = new StringBuilder();
     sb.append( rule.getSymbol().getName());
-    sb.append( " := ");
+    sb.append( " :=");
     for( int i=0; i<=rule.size(); i++)
     {
-      if ( i > 0) sb.append( ' ');
       if ( i == pos) sb.append( '•');
+      else sb.append( ' ');
       if ( i < rule.size()) sb.append( rule.get( i));
     }
     return sb.toString();
@@ -159,5 +160,5 @@ public class Locus
   private Locus parent;
   private Rule rule;
   private int pos;
-  private Set<Rule> visited;
+  private Set<Locus> visited;
 }
