@@ -32,33 +32,34 @@ public class LRState
   
   public LRState( Locus locus)
   {
-    this.locus = locus;
+    this.loci = new ArrayList<Locus>(); 
+    this.loci.add( locus);
     this.actions = new ArrayList<Action>( 5);
   }
+  
+  public void addLocus( Locus locus)
+  {
+    loci.add( locus);
+  }
+  
+  public List<Locus> getLoci()
+  {
+    return loci;
+  }
+  
+  public void setTerminals( List<Locus> terminals)
+  {
+    this.terminals = terminals;
+  }
+  
+  public List<Locus> getTerminals()
+  {
+    return terminals;
+  }
 
-  public void accept( List<Locus> lookahead)
+  public void addTransition( Locus terminal, LRState state)
   {
-    actions.add( new Action( ActionType.accept, lookahead));
-  }
-  
-  public void expect( List<Locus> lookahead)
-  {
-    actions.add( new Action( ActionType.expect, lookahead));
-  }
-  
-  public void push( List<Locus> lookahead)
-  {
-    actions.add( new Action( ActionType.push, lookahead));
-  }
-  
-  public void resume( List<Locus> lookahead)
-  {
-    actions.add( new Action( ActionType.resume, lookahead));
-  }
-  
-  public void pop( List<Locus> lookahead)
-  {
-    actions.add( new Action( ActionType.pop, lookahead));
+    System.out.printf( "  %-15s %s\n", terminal, (state != null)? state.getLoci(): "ACCEPT");
   }
   
   @Override
@@ -67,7 +68,7 @@ public class LRState
     StringBuilder sb = new StringBuilder();
     
     sb.append( "LRState at ");
-    sb.append( locus); sb.append( '\n');
+    sb.append( loci); sb.append( '\n');
     
     for( Action action: actions)
     {
@@ -77,6 +78,7 @@ public class LRState
     return sb.toString();
   }
 
-  private Locus locus;
+  private List<Locus> loci;
   private List<Action> actions;
+  private List<Locus> terminals;
 }

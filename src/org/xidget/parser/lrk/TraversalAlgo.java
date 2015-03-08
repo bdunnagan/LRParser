@@ -2,12 +2,12 @@ package org.xidget.parser.lrk;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Deque;
-import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
-import org.xidget.parser.lrk.examples.*;
+import java.util.Set;
+import org.xidget.parser.lrk.examples.Wikipedia;
 
 public class TraversalAlgo
 {
@@ -19,9 +19,10 @@ public class TraversalAlgo
    * @param start The starting locus.
    * @return Returns the terminals found on each path.
    */
-  public static List<Locus> nextTerminalsInGrammar( Locus start)
+  public static List<Locus> nextTerminals( Locus start)
   {
     List<Locus> leaves = new ArrayList<Locus>();
+    Set<Rule> visited = new HashSet<Rule>();
     
     Deque<Locus> stack = new ArrayDeque<Locus>();
     stack.push( start);
@@ -29,9 +30,6 @@ public class TraversalAlgo
     while( !stack.isEmpty())
     {
       Locus locus = stack.pop();
-      
-      if ( !locus.visit())
-        continue;
       
       if ( locus.isEnd() || locus.isEmpty())
       {
@@ -45,50 +43,44 @@ public class TraversalAlgo
       else
       {
         for( Rule rule: start.getRule().getGrammar().lookup( locus.getSymbol()))
-          stack.push( new Locus( locus, rule, 0));
+          if ( visited.add( rule))
+            stack.push( new Locus( locus, rule, 0));
       }
     }
     
     return leaves;
   }
   
-  public static List<Locus> leafToPath( Locus leaf)
+  public static Set<Symbol> lookahead( List<Locus> start, int k)
+  {
+    Set<Symbol> la = new LinkedHashSet<Symbol>();
+    List<Locus> loci = start;
+    for( int i=0; i<k; i++)
+    {
+      List<Locus> nextLoci = new ArrayList<Locus>();
+      for( Locus locus: loci)
+      {
+        for( Locus terminal: nextTerminals( locus))
+        {
+          nextLoci.add( terminal.nextInGrammar());
+          la.add( terminal.getSymbol());
+        }
+      }
+      loci = nextLoci;
+    }
+    return la;
+  }
+  
+  public static List<Locus> leafToPath( Locus leaf, Locus ancestor)
   {
     List<Locus> path = new ArrayList<Locus>();
     Locus locus = leaf;
-    while( locus != null)
+    while( locus != null && locus != ancestor)
     {
       path.add( 0, locus);
       locus = locus.previousInGrammar();
     }
     return path;
-  }
-  
-  public static void print( String indent, Locus start)
-  {
-    Deque<Locus> stack = new ArrayDeque<Locus>();
-    stack.push( start);
-    while( !stack.isEmpty())
-    {
-      Locus locus = stack.pop();
-      
-      System.out.printf( String.format( "%%%ds%%s\n", locus.getDepth()*2+1), "", locus);
-      
-      if ( locus.isTerminal())
-      {
-        if ( !locus.isStreamEnd())
-        {
-          Locus nextLocus = locus.nextInGrammar();
-          if ( nextLocus != null) 
-            stack.push( nextLocus);
-        }
-      }
-      else
-      {
-        for( Locus terminal: nextTerminalsInGrammar( locus))
-          stack.push( terminal);
-      }
-    }
   }
   
   public static void main( String[] args) throws Exception
@@ -97,8 +89,7 @@ public class TraversalAlgo
 //    Grammar grammar = new RecursiveLR1();
 //    Grammar grammar = new RecursiveLR2();
     Grammar grammar = new Wikipedia();
-    Locus start = new Locus( grammar.getStart());
     //System.out.println( nextTerminalsInGrammar( start));
-    print( "", start);
+    System.out.println( grammar);
   }
 }

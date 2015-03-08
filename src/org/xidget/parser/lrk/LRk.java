@@ -3,9 +3,8 @@ package org.xidget.parser.lrk;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+import org.xidget.parser.lrk.examples.NonLR1;
 
 public class LRk
 {
@@ -13,87 +12,72 @@ public class LRk
   {
     this.grammar = grammar;
     this.k = k;
-    this.states = new LinkedHashMap<Locus, LRState>();
+    this.lr0Map = new LR0Map();
   }
 
   public List<LRState> compile()
   {
-    // 1. create one provisional state for each locus
-    // 2. for each state transition, capture lookbehind, as well as, lookahead
-    // 3a. resolve conflicts by splitting states, using lookbehind to update references. 
-    //    NOTE: Splitting states can/will create conflicts in states that 
-    //          reference the state being split.  Therefore, splitting a state
-    //          is a recursive process.
-    // 3b. if conflict resolution proceeds from the start state, breadth-wise through 
-    //     the graph, then LR(k) lookahead can be used to split the next state.  
-
+    List<LRState> states = new ArrayList<LRState>();
     
     Deque<Locus> stack = new ArrayDeque<Locus>();
-    stack.push( new Locus( grammar.getStart(), 0));
+    stack.push( new Locus( grammar.getStart()));
     while( !stack.isEmpty())
     {
       Locus locus = stack.pop();
-      System.out.printf( "Visiting: %s\n", locus);
       
-      if ( states.containsKey( locus))
-        continue;
-
-      for( Locus nextKernel: locus.nextKernelsInGrammar())
-        stack.push( nextKernel);
-      
-      LRState state = getStateForKernel( locus);
-      
-      List<List<Locus>> lookaheads = locus.lookahead( k);
-      for( List<Locus> lookahead: lookaheads)
+      LRState state = lr0Map.get( locus);
+      if ( state == null)
       {
-        if ( lookahead.size() == 0)
+        List<Locus> terminals = TraversalAlgo.nextTerminals( locus);
+        for( Locus terminal: terminals) 
         {
-          state.accept( lookahead);
-        }
-        else
-        {
-          Locus nextLocus = lookahead.get( 0);
-          if ( nextLocus.isEnd() || nextLocus.isStreamEnd())
+          if ( !terminal.isStreamEnd())
           {
-            state.pop( lookahead);
-            
-            if ( lookahead.size() > 1)
-            {
-              LRState pushState = getStateForKernel( lookahead.get( 1).prevInRule());
-              pushState.resume( lookahead.subList( 1, lookahead.size()));
-            }
-          }
-          else if ( nextLocus.isTerminal())
-          {
-            state.expect( lookahead);
-          }
-          else
-          {
-            state.push( lookahead);
+            Locus nextLocus = terminal.nextInRule();
+            if ( nextLocus != null) stack.push( nextLocus);
           }
         }
+ 
+        state = new LRState( locus);
+        lr0Map.put( locus, state);
+        states.add( state);
+        
+        state.setTerminals( terminals);
+      }
+      else
+      {
+        state.addLocus( locus);
       }
     }
     
-    return new ArrayList<LRState>( states.values());
+    for( LRState state: states) createTransitions( state);
+    
+    return states;
   }
   
-  private LRState getStateForKernel( Locus kernel)
+  private void createTransitions( LRState state)
   {
-    LRState state = states.get( kernel);
-    if ( state == null)
+    System.out.println( state);
+    for( Locus terminal: state.getTerminals())
     {
-      state = new LRState( kernel);
-      states.put( kernel, state);
+      Locus nextLocus = terminal.nextInGrammar();
+      LRState nextState = lr0Map.get( nextLocus);
+      state.addTransition( terminal, nextState);
     }
-    return state;
+    System.out.println();
   }
   
   private Grammar grammar;
   private int k;
-  private Map<Locus, LRState> states;
+  private LR0Map lr0Map;
   
   public static void main( String[] args) throws Exception
   {
+//  Grammar grammar = new SimpleLR2();
+//  Grammar grammar = new RecursiveLR1();
+//  Grammar grammar = new RecursiveLR2();
+    Grammar grammar = new NonLR1();
+    LRk lrk = new LRk( grammar, 1);
+    lrk.compile();
   }
 }  

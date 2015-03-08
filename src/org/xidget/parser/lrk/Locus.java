@@ -1,8 +1,7 @@
 package org.xidget.parser.lrk;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class Locus
 {
@@ -16,7 +15,6 @@ public class Locus
     this.parent = parent;
     this.rule = rule;
     this.pos = pos;
-    this.visited = (parent != null)? new HashSet<Locus>( parent.visited): new HashSet<Locus>();
   }
 
   public Locus getParent()
@@ -24,16 +22,16 @@ public class Locus
     return parent;
   }
   
-  public int getDepth()
+  public List<Locus> getAncestors()
   {
-    int depth = 0;
+    List<Locus> ancestors = new ArrayList<Locus>();
     Locus locus = parent;
     while( locus != null)
     {
-      depth++;
+      ancestors.add( locus);
       locus = locus.getParent();
     }
-    return depth;
+    return ancestors;
   }
   
   public Locus previousInGrammar()
@@ -47,12 +45,7 @@ public class Locus
   {
     Locus next = nextInRule();
     if ( next != null) return next;
-    if ( parent != null)
-    {
-      parent.visited.addAll( visited);
-      return parent.nextInRule();
-    }
-    return null;
+    return (parent != null)? parent.nextInRule(): null; 
   }
   
   /**
@@ -112,24 +105,6 @@ public class Locus
     return symbol != null && symbol.isStreamEnd();
   }
   
-  public boolean visit()
-  {
-    return visited.add( this);
-  }
-
-  @Override
-  public int hashCode()
-  {
-    return rule.hashCode() << 7 + pos;
-  }
-
-  @Override
-  public boolean equals( Object object)
-  {
-    Locus locus = (Locus)object;
-    return locus.getRule() == rule && locus.getPosition() == pos;
-  }
-
   @Override
   public String toString()
   {
@@ -160,5 +135,4 @@ public class Locus
   private Locus parent;
   private Rule rule;
   private int pos;
-  private Set<Locus> visited;
 }

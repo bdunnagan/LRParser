@@ -70,6 +70,11 @@ public class Grammar
     return start;
   }
   
+  public List<Rule> getRules()
+  {
+    return order;
+  }
+  
   public boolean isTerminal( Symbol symbol)
   {
     return (symbol != null)? !map.containsKey( symbol): false;
@@ -115,6 +120,21 @@ public class Grammar
     }
   }
   
+  @Override
+  public String toString()
+  {
+    StringBuilder sb = new StringBuilder();
+    for( Rule rule: order)
+    {
+      for( int i=0; i<rule.size(); i++)
+      {
+        Locus locus = new Locus( null, rule, i);
+        sb.append( String.format( "%-20s %s\n", locus, TraversalAlgo.nextTerminals( locus)));
+      }
+    }
+    return sb.toString();
+  }
+
   private Rule start;
   private Map<Symbol, List<Rule>> map;
   private Map<Symbol, List<Locus>> uses;
