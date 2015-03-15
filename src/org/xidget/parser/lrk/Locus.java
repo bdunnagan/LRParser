@@ -106,6 +106,19 @@ public class Locus
   }
   
   @Override
+  public int hashCode()
+  {
+    return (rule.hashCode() & 0xFFFFFF00) ^ pos;
+  }
+
+  @Override
+  public boolean equals( Object object)
+  {
+    Locus other = (Locus)object;
+    return other.getRule() == rule && other.getPosition() == pos;
+  }
+
+  @Override
   public String toString()
   {
     StringBuilder sb = new StringBuilder();

@@ -42,8 +42,6 @@ public class Grammar
   
   public void addRule( Symbol symbol, Rule rule)
   {
-    uses = null;
-    
     if ( start == null)
     {
       start = rule;
@@ -86,40 +84,6 @@ public class Grammar
     return (rules != null)? rules: Collections.<Rule>emptyList();
   }
   
-  /**
-   * Get the every locus immediately following where the specified non-terminal appears.
-   * @param symbol The symbol for the non-terminal.
-   * @return Returns a list of Locus, possibly empty.
-   */
-  public List<Locus> usage( Symbol symbol)
-  {
-    if ( uses == null) buildUsage();
-    List<Locus> list = uses.get( symbol); 
-    return (list != null)? list: Collections.<Locus>emptyList();
-  }
-  
-  private void buildUsage()
-  {
-    uses = new HashMap<Symbol, List<Locus>>();
-    for( Rule rule: order)
-    {
-      for( int i=0; i<rule.size(); i++)
-      {
-        Symbol symbol = rule.get( i);
-        if ( map.containsKey( symbol))
-        {
-          List<Locus> list = uses.get( symbol);
-          if ( list == null)
-          {
-            list = new ArrayList<Locus>();
-            uses.put( symbol, list);
-          }
-          list.add( new Locus( rule, i+1));
-        }
-      }
-    }
-  }
-  
   @Override
   public String toString()
   {
@@ -137,6 +101,5 @@ public class Grammar
 
   private Rule start;
   private Map<Symbol, List<Rule>> map;
-  private Map<Symbol, List<Locus>> uses;
   private List<Rule> order;
 }

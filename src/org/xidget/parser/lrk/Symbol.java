@@ -15,6 +15,7 @@ public class Symbol
     this.name = name;
     this.isEmpty = isEmpty;
     this.isStreamEnd = isStreamEnd;
+    this.value = name.charAt( 0);
   }
   
   public String getName()
@@ -31,7 +32,12 @@ public class Symbol
   {
     return isStreamEnd;
   }
-
+  
+  public long getValue()
+  {
+    return value;
+  }
+  
   @Override
   public int hashCode()
   {
@@ -54,4 +60,5 @@ public class Symbol
   private String name;
   private boolean isEmpty;
   private boolean isStreamEnd;
+  private long value;
 }
