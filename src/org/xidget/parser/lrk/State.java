@@ -29,6 +29,11 @@ public class State
     return instructions.get( key);
   }
   
+  public Map<Long, Instruction> getInstructions()
+  {
+    return instructions;
+  }
+  
   public Rule getRule()
   {
     return rule;

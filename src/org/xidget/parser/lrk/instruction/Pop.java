@@ -9,4 +9,10 @@ public class Pop implements Instruction
   {
     parser.stack.pop();
   }
+
+  @Override
+  public String toString()
+  {
+    return "POP";
+  }
 }

@@ -18,6 +18,12 @@ public class Push implements Instruction
     parser.stack.push( new Item( state, position));
   }
   
+  @Override
+  public String toString()
+  {
+    return String.format( "PUSH %s, %s", state.getRule(), position);
+  }
+  
   private State state;
   private int position;
 }

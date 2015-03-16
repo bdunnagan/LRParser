@@ -3,12 +3,13 @@ package org.xidget.parser.lrk;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.xidget.parser.lrk.examples.NonLR1;
 import org.xidget.parser.lrk.instruction.Advance;
+import org.xidget.parser.lrk.instruction.Instruction;
 import org.xidget.parser.lrk.instruction.Pop;
 import org.xidget.parser.lrk.instruction.Push;
 
@@ -58,7 +59,7 @@ public class Compiler
         for( Locus step: TraversalAlgo.leafToPath( terminal.getParent(), null))
         {
           State nextState = getCreateState( step.getRule());
-          Push instruction = new Push( nextState, 0); 
+          Push instruction = new Push( nextState, 1); 
           state.setInstruction( locus.getPosition(), terminal.getSymbol().getValue(), instruction);
         }
         
@@ -78,38 +79,22 @@ public class Compiler
   
   public String toString()
   {
-    Map<Symbol, Integer> termPosMap = new HashMap<Symbol, Integer>();
-    TableFormatter printer = new TableFormatter();
-    int termPosCounter = 0;
-    printer.setColumnWidth( 0, 5);
-//    List<State> states = new ArrayList<State>( this.states.values());
-//    for( int i=0; i<states.size(); i++)
-//    {
-//      printer.add( i+1, 0, states.get( i).toString().trim()); 
-//      printer.add( i+1, 1, ""+i);
-//      for( Locus t: states.get( i).getTerminals())
-//      {
-//        Integer termPos = termPosMap.get( t.getSymbol());
-//        if ( termPos == null)
-//        {
-//          termPos = termPosCounter++;
-//          termPosMap.put( t.getSymbol(), termPos);
-//        }
-//        
-//        Locus nextLocus = t.nextInGrammar();
-//        LRState nextState = stateMap.get( nextLocus.getRule());
-//        
-//        int index = states.indexOf( nextState);
-//        printer.add( i+1, termPos+2, (index >= 0)? ""+index: "A");
-//      }
-//    }
-//    
-//    for( Map.Entry<Symbol, Integer> entry: termPosMap.entrySet())
-//    {
-//      printer.add( 0, entry.getValue()+2, entry.getKey().toString());
-//    }
-    
-    return printer.toString();
+    StringBuilder sb = new StringBuilder();
+    for( Rule rule: grammar.getRules())
+    {
+      State state = states.get( rule);
+      sb.append( rule.toString());
+      sb.append( '\n');
+      Map<Long, Instruction> instructions = state.getInstructions();
+      for( Map.Entry<Long, Instruction> entry: instructions.entrySet())
+      {
+        sb.append( String.format( "\t%3d %3d %s\n", 
+            entry.getKey() >> 32,
+            entry.getKey() & 0xFFFFFFFFL,
+            entry.getValue()));
+      }
+    }
+    return sb.toString();
   }
   
   private Grammar grammar;
@@ -123,6 +108,7 @@ public class Compiler
     Grammar grammar = new NonLR1();
     Compiler lrk = new Compiler( grammar);
     List<State> states = lrk.compile();
+    System.out.println( lrk);
     DemoParser parser = new DemoParser( states.get( 0));
     BufferedReader reader = new BufferedReader( new InputStreamReader( System.in));
     while( true)

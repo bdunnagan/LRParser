@@ -9,4 +9,10 @@ public class Advance implements Instruction
   {
     parser.stack.peek().position++;
   }
+  
+  @Override
+  public String toString()
+  {
+    return "ADVANCE";
+  }
 }
