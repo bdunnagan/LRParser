@@ -30,6 +30,7 @@ public class Compiler
         Locus locus = new Locus( null, rule, i);
         List<Locus> terminals = TraversalAlgo.nextTerminals( locus);
         createActions( state, locus, terminals);
+        if ( locus.isStreamEnd()) break;
       }
     }
     return new ArrayList<State>( states.values());
@@ -128,8 +129,11 @@ public class Compiler
     {
       System.out.print( "> ");
       String line = reader.readLine();
-      if ( parser.parse( line.trim().charAt( 0)))
-        break;
+      for( int i=0; i<line.length(); i++)
+      {
+        if ( parser.parse( line.charAt( i)))
+          break;
+      }
     }
   }
 }  

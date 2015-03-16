@@ -29,6 +29,11 @@ public class State
     return instructions.get( key);
   }
   
+  public Rule getRule()
+  {
+    return rule;
+  }
+  
   public String toString()
   {
     return rule.toString();

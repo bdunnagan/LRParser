@@ -17,6 +17,7 @@ public class DemoParser
     Item item = stack.peek();
     Instruction instruction = item.state.getInstruction( item.position, symbol);
     instruction.execute( this);
+    System.out.printf( "%s %c %s\n", new Locus( null, item.state.getRule(), item.position), (char)symbol, instruction); 
     return stack.isEmpty();
   }
   
