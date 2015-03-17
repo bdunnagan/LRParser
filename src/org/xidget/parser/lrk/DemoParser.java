@@ -2,6 +2,7 @@ package org.xidget.parser.lrk;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.List;
 import org.xidget.parser.lrk.instruction.Instruction;
 
 public class DemoParser
@@ -15,9 +16,15 @@ public class DemoParser
   public boolean parse( long symbol)
   {
     Item item = stack.peek();
-    Instruction instruction = item.state.getInstruction( item.position, symbol);
-    instruction.execute( this);
-    System.out.printf( "%s %c %s\n", new Locus( null, item.state.getRule(), item.position), (char)symbol, instruction); 
+    List<Instruction> instructions = item.state.getInstructions( item.position, symbol);
+    for( Instruction instruction: instructions)
+    {
+      instruction.execute( this);
+      System.out.printf( "%-20s: '%c', %s\n", 
+          instruction, 
+          (char)symbol,
+          new Locus( null, item.state.getRule(), item.position)); 
+    }
     return stack.isEmpty();
   }
   
@@ -27,6 +34,11 @@ public class DemoParser
     {
       this.state = state;
       this.position = position;
+    }
+    
+    public String toString()
+    {
+      return new Locus( null, state.getRule(), position).toString();
     }
     
     public State state;

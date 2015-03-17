@@ -2,6 +2,7 @@ package org.xidget.parser.lrk.instruction;
 
 import org.xidget.parser.lrk.DemoParser;
 import org.xidget.parser.lrk.DemoParser.Item;
+import org.xidget.parser.lrk.Locus;
 import org.xidget.parser.lrk.State;
 
 public class Push implements Instruction
@@ -21,7 +22,7 @@ public class Push implements Instruction
   @Override
   public String toString()
   {
-    return String.format( "PUSH %s, %s", state.getRule(), position);
+    return String.format( "PUSH %s", new Locus( null, state.getRule(), position));
   }
   
   private State state;

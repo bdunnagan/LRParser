@@ -6,10 +6,13 @@ public class NonLR1 extends Grammar
 {
   public NonLR1()
   {
-    addTestRule( "S := Z");
-    addTestRule( "Z := a A a");
-    addTestRule( "Z := b A b");
-    addTestRule( "A := a");
-    addTestRule( "A := a a");
+    addTestRule( "S := A");
+    addTestRule( "A := a A");
+    addTestRule( "A := ø");
+//    addTestRule( "S := Z");
+//    addTestRule( "Z := a A a");
+//    addTestRule( "Z := b A b");
+//    addTestRule( "A := a");
+//    addTestRule( "A := a a");
   }
 }
