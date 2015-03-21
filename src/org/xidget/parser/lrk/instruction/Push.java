@@ -14,9 +14,10 @@ public class Push implements Instruction
   }
   
   @Override
-  public void execute( DemoParser parser)
+  public boolean execute( DemoParser parser)
   {
     parser.stack.push( new Item( state, position));
+    return true;
   }
   
   @Override

@@ -4,5 +4,5 @@ import org.xidget.parser.lrk.DemoParser;
 
 public interface Instruction
 {
-  public void execute( DemoParser parser);
+  public boolean execute( DemoParser parser);
 }

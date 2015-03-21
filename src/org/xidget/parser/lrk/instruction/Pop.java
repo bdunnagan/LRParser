@@ -6,11 +6,14 @@ import org.xidget.parser.lrk.DemoParser.Item;
 public class Pop implements Instruction
 {
   @Override
-  public void execute( DemoParser parser)
+  public boolean execute( DemoParser parser)
   {
-    parser.stack.pop();
     Item item = parser.stack.peek();
-    item.position++;
+    System.out.printf( "Produce: %s\n", item.state.getRule());
+    
+    parser.stack.pop();
+    
+    return false;
   }
 
   @Override

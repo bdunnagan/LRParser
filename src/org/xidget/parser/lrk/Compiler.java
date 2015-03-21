@@ -5,9 +5,11 @@ import java.io.InputStreamReader;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.xidget.parser.lrk.examples.NonLR1;
 import org.xidget.parser.lrk.instruction.Advance;
 import org.xidget.parser.lrk.instruction.Instruction;
@@ -24,36 +26,40 @@ public class Compiler
   public List<State> compile()
   {
     states = new LinkedHashMap<Rule, State>();
-    
+    Set<State> visited = new HashSet<State>();
+
     Deque<Locus> stack = new ArrayDeque<Locus>();
     stack.push( new Locus( null, grammar.getStart(), 0));
     while( !stack.isEmpty())
     {
       Locus locus = stack.pop();
+      
       State state = getCreateState( locus.getRule());
-      
-      List<Locus> terminals = TraversalAlgo.nextTerminals( locus);
-      createActions( state, locus, terminals);
-      
-      for( Locus terminal: terminals)
+      if ( visited.add( state))
       {
-        Locus nextLocus = terminal.nextInRule();
-        if ( !nextLocus.isEnd() && !nextLocus.isStreamEnd())
-          stack.push( nextLocus);
+        List<Locus> terminals = TraversalAlgo.nextTerminals( locus);
+        createInstructions( state, locus, terminals);
+        
+        for( Locus terminal: terminals)
+        {
+          Locus nextLocus = terminal.nextInGrammar();
+          if ( !nextLocus.isEnd() && !nextLocus.isStreamEnd())
+            stack.push( nextLocus);
+        }
       }
-      
-      Locus nextLocus = locus.nextInRule();
-      if ( !nextLocus.isEnd() && !nextLocus.isStreamEnd())
-        stack.push( nextLocus);
     }
     
     return new ArrayList<State>( states.values());
   }
   
-  public void createActions( State state, Locus locus, List<Locus> terminals)
+  public void createInstructions( State state, Locus locus, List<Locus> terminals)
   {
     if ( locus.isEnd() || locus.isStreamEnd())
     {
+      // 
+      // At this point, the production is complete, so these terminals
+      // will all pop the stack.
+      //
       Pop instruction = new Pop();
       for( Locus terminal: terminals)
         state.addInstruction( locus.getPosition(), terminal.getSymbol().getValue(), instruction);
@@ -76,24 +82,63 @@ public class Compiler
     }
     else
     {
+      //
+      // Consider the following case:
+      //   A := 1•B 2
+      //   B := ø
+      //
+      // Next terminals for the locus at A will return 2.  Since the path through
+      // B is not captured, A should not be pushed and popped.
+      //
       for( Locus terminal: terminals)
       {
         long symbol = terminal.getSymbol().getValue();
         
-        for( Locus step: TraversalAlgo.leafToPath( terminal.getParent(), locus))
+        if ( isAncestor( terminal, locus))
         {
-          State nextState = getCreateState( step.getRule());
-          Push instruction = new Push( nextState, 1); 
-          state.addInstruction( locus.getPosition(), symbol, instruction);
+          for( Locus step: TraversalAlgo.leafToPath( terminal, locus))
+          {
+            State nextState = getCreateState( step.getRule());
+            Push instruction = new Push( nextState, 1); 
+            state.addInstruction( locus.getPosition(), symbol, instruction);
+          }
         }
-        
-        State nextState = getCreateState( terminal.getRule());
-        Locus nextLocus = terminal.nextInRule();
-        state.addInstruction( locus.getPosition(), symbol, new Push( nextState, nextLocus.getPosition()));
-        if ( nextLocus.isEnd())
-          state.addInstruction( locus.getPosition(), symbol, new Pop());        
+        else if ( isAncestor( locus, terminal))
+        {
+          Locus step = locus;
+          while( step.getRule() != terminal.getRule())
+          {
+            Pop instruction = new Pop(); 
+            state.addInstruction( locus.getPosition(), symbol, instruction);
+            step = step.getParent();
+          }
+        }
+        else
+        {
+          if ( terminal.isStreamEnd())
+          {
+            Pop instruction = new Pop(); 
+            state.addInstruction( locus.getPosition(), symbol, instruction);
+          }
+          else
+          {
+            Advance instruction = new Advance();
+            state.addInstruction( locus.getPosition(), symbol, instruction);
+          }
+        }
       }
     }
+  }
+  
+  private boolean isAncestor( Locus locus, Locus ancestor)
+  {
+    locus = locus.getParent();
+    while( locus != null)
+    {
+      if ( locus.getRule() == ancestor.getRule()) return true;
+      locus = locus.getParent();
+    }
+    return false;
   }
   
   public State getCreateState( Rule rule)
@@ -147,6 +192,8 @@ public class Compiler
     {
       System.out.print( "> ");
       String line = reader.readLine();
+      if ( line.trim().length() == 0) line = "¬";
+      
       for( int i=0; i<line.length(); i++)
       {
         if ( parser.parse( line.charAt( i)))

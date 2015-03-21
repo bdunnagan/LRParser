@@ -10,6 +10,11 @@ public class Locus
     this( null, rule, 0);
   }
   
+  public Locus( Rule rule, int pos)
+  {
+    this( null, rule, pos);
+  }
+  
   public Locus( Locus parent, Rule rule, int pos)
   {
     this.parent = parent;
@@ -65,6 +70,8 @@ public class Locus
    */
   public Locus nextInRule()
   {
+    while( pos < rule.size() && rule.get( pos).isEmpty())
+      pos++;
     return (pos < rule.size())? new Locus( parent, rule, pos+1): null;
   }
   

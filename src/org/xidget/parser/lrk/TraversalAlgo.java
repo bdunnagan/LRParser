@@ -22,7 +22,7 @@ public class TraversalAlgo
   public static List<Locus> nextTerminals( Locus start)
   {
     List<Locus> leaves = new ArrayList<Locus>();
-    Set<Rule> visited = new HashSet<Rule>();
+    Set<Rule> visited = new HashSet<Rule>(); // wrong
     
     Deque<Locus> stack = new ArrayDeque<Locus>();
     stack.push( start);

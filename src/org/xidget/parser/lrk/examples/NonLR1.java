@@ -7,7 +7,7 @@ public class NonLR1 extends Grammar
   public NonLR1()
   {
     addTestRule( "S := A");
-    addTestRule( "A := a A");
+    addTestRule( "A := A a");
     addTestRule( "A := ø");
 //    addTestRule( "S := Z");
 //    addTestRule( "Z := a A a");

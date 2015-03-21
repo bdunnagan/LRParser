@@ -5,9 +5,10 @@ import org.xidget.parser.lrk.DemoParser;
 public class Advance implements Instruction
 {
   @Override
-  public void execute( DemoParser parser)
+  public boolean execute( DemoParser parser)
   {
     parser.stack.peek().position++;
+    return false;
   }
   
   @Override

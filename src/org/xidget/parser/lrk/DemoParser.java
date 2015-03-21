@@ -15,15 +15,25 @@ public class DemoParser
 
   public boolean parse( long symbol)
   {
-    Item item = stack.peek();
-    List<Instruction> instructions = item.state.getInstructions( item.position, symbol);
-    for( Instruction instruction: instructions)
+    boolean done = false;
+    while( !done && !stack.isEmpty())
     {
-      instruction.execute( this);
-      System.out.printf( "%-20s: '%c', %s\n", 
-          instruction, 
-          (char)symbol,
-          new Locus( null, item.state.getRule(), item.position)); 
+      done = true;
+      Item item = stack.peek();
+      List<Instruction> instructions = item.state.getInstructions( item.position, symbol);
+      for( Instruction instruction: instructions)
+      {
+        System.out.printf( "%-20s: '%c', %s\n", 
+            instruction, 
+            (char)symbol,
+            new Locus( null, item.state.getRule(), item.position)); 
+        
+        if ( !instruction.execute( this))
+        {
+          done = false;
+          break;
+        }
+      }
     }
     return stack.isEmpty();
   }

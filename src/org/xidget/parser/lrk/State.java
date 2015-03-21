@@ -41,7 +41,7 @@ public class State
   public List<Instruction> getInstructions( int position, long symbol)
   {
     Map<Long, List<Instruction>> map = instructions.get( position);
-    if ( map == null) throw new IllegalStateException();
+    if ( map == null) throw new IllegalStateException( String.format( "Parser error @ %s for %c", new Locus( null, rule, position), (int)symbol));
     
     List<Instruction> list = map.get( symbol);
     if ( list == null) throw new IllegalStateException();
