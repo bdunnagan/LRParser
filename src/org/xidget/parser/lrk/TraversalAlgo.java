@@ -22,7 +22,6 @@ public class TraversalAlgo
   public static List<Locus> nextTerminals( Locus start)
   {
     List<Locus> leaves = new ArrayList<Locus>();
-    Set<Rule> visited = new HashSet<Rule>(); // wrong
     
     Deque<Locus> stack = new ArrayDeque<Locus>();
     stack.push( start);
@@ -30,6 +29,7 @@ public class TraversalAlgo
     while( !stack.isEmpty())
     {
       Locus locus = stack.pop();
+      if ( isCycle( locus)) continue;
       
       if ( locus.isEnd() || locus.isEmpty())
       {
@@ -43,12 +43,23 @@ public class TraversalAlgo
       else
       {
         for( Rule rule: start.getRule().getGrammar().lookup( locus.getSymbol()))
-          if ( visited.add( rule))
-            stack.push( new Locus( locus, rule, 0));
+          stack.push( new Locus( locus, rule, 0));
       }
     }
     
     return leaves;
+  }
+  
+  private static boolean isCycle( Locus locus)
+  {
+    Set<Rule> set = new HashSet<Rule>();
+    while( locus != null)
+    {
+      if ( !set.add( locus.getRule()))
+        return true;
+      locus = locus.getParent();
+    }
+    return false;
   }
   
   public static Set<Symbol> lookahead( List<Locus> start, int k)
