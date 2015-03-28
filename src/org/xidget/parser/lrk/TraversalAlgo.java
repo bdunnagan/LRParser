@@ -7,7 +7,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import org.xidget.parser.lrk.examples.Wikipedia;
+import org.xidget.parser.lrk.examples.NonLR1;
 
 public class TraversalAlgo
 {
@@ -22,6 +22,7 @@ public class TraversalAlgo
   public static List<Locus> nextTerminals( Locus start)
   {
     List<Locus> leaves = new ArrayList<Locus>();
+    Grammar grammar = start.getRule().getGrammar();
     
     Deque<Locus> stack = new ArrayDeque<Locus>();
     stack.push( start);
@@ -29,8 +30,6 @@ public class TraversalAlgo
     while( !stack.isEmpty())
     {
       Locus locus = stack.pop();
-      if ( isCycle( locus)) continue;
-      
       if ( locus.isEnd() || locus.isEmpty())
       {
         Locus nextInGrammar = locus.nextInGrammar();
@@ -40,23 +39,39 @@ public class TraversalAlgo
       {
         leaves.add( locus);
       }
+      else if ( locus.hasCycle())
+      {
+        // A cycle means that we've returned to this rule without finding any terminals
+        // on this path.  This can only happen when there is a left recurrence, for
+        // example, A := A a.  Because empty rules are not included in the path, we must
+        // check here to make sure that an empty rule exists before we can push the
+        // nextInGrammar on the stack.
+        //if ( pathHasEmptyRule( locus))
+        //  stack.push( locus.nextInGrammar());
+      }
       else
       {
-        for( Rule rule: start.getRule().getGrammar().lookup( locus.getSymbol()))
-          stack.push( new Locus( locus, rule, 0));
+        for( Rule rule: grammar.lookup( locus.getSymbol()))
+        {
+          Locus ruleLocus = new Locus( locus, rule, 0);
+          stack.push( ruleLocus);
+        }
       }
     }
     
     return leaves;
   }
   
-  private static boolean isCycle( Locus locus)
+  private static boolean pathHasEmptyRule( Locus locus)
   {
-    Set<Rule> set = new HashSet<Rule>();
+    Grammar grammar = locus.getRule().getGrammar();
     while( locus != null)
     {
-      if ( !set.add( locus.getRule()))
-        return true;
+      for( Rule rule: grammar.lookup( locus.getRule().getSymbol()))
+      {
+        if ( rule.size() == 1 && rule.get( 0).isEmpty())
+          return true;
+      }
       locus = locus.getParent();
     }
     return false;
@@ -82,25 +97,17 @@ public class TraversalAlgo
     return la;
   }
   
-  public static List<Locus> leafToPath( Locus leaf, Locus ancestor)
-  {
-    List<Locus> path = new ArrayList<Locus>();
-    Locus locus = leaf;
-    while( locus != null && locus != ancestor)
-    {
-      path.add( 0, locus);
-      locus = locus.previousInGrammar();
-    }
-    return path;
-  }
-  
   public static void main( String[] args) throws Exception
   {
 //    Grammar grammar = new SimpleLR2();
 //    Grammar grammar = new RecursiveLR1();
 //    Grammar grammar = new RecursiveLR2();
-    Grammar grammar = new Wikipedia();
-    //System.out.println( nextTerminalsInGrammar( start));
-    System.out.println( grammar);
+    Grammar grammar = new NonLR1();
+    Rule start = grammar.getStart();
+    Locus locus = new Locus( null, start, 0);
+    List<Locus> terminals = nextTerminals( locus);
+    System.out.println( terminals);
+    System.out.println( terminals.get( 2).nextInRule());
+    System.out.println( nextTerminals( terminals.get( 2).nextInRule()));
   }
 }

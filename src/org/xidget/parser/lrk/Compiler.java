@@ -43,7 +43,7 @@ public class Compiler
         for( Locus terminal: terminals)
         {
           Locus nextLocus = terminal.nextInGrammar();
-          if ( !nextLocus.isEnd() && !nextLocus.isStreamEnd())
+          if ( nextLocus != null && !nextLocus.isStreamEnd())
             stack.push( nextLocus);
         }
       }
@@ -96,12 +96,17 @@ public class Compiler
         
         if ( isAncestor( terminal, locus))
         {
-          for( Locus step: TraversalAlgo.leafToPath( terminal, locus))
+          List<Instruction> instructions = new ArrayList<Instruction>();
+          Locus pushLocus = terminal;
+          while( pushLocus != locus)
           {
-            State nextState = getCreateState( step.getRule());
-            Push instruction = new Push( nextState, 1); 
-            state.addInstruction( locus.getPosition(), symbol, instruction);
+            State nextState = getCreateState( pushLocus.getRule());
+            Push instruction = new Push( nextState, 1);
+            instructions.add( 0, instruction);
+            pushLocus = pushLocus.getParent();
           }
+          for( Instruction instruction: instructions)
+            state.addInstruction( locus.getPosition(), symbol, instruction);
         }
         else if ( isAncestor( locus, terminal))
         {
@@ -166,7 +171,7 @@ public class Compiler
           sb.append( "\t"); sb.append( (char)entry2.getKey().intValue()); sb.append( "\n");
           for( Instruction instruction: entry2.getValue())
           {
-            sb.append( "\t\t"); sb.append( instruction); sb.append( "\n");
+            sb.append( "\t\t"); sb.append( entry.getKey()); sb.append( " "); sb.append( instruction); sb.append( "\n");
           }
         }
       }

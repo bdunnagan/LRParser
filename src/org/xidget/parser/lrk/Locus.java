@@ -1,7 +1,9 @@
 package org.xidget.parser.lrk;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class Locus
 {
@@ -46,13 +48,6 @@ public class Locus
     return (parent != null)? parent: null;
   }
   
-  public Locus nextInGrammar()
-  {
-    Locus next = nextInRule();
-    if ( next != null) return next;
-    return (parent != null)? parent.nextInRule(): null; 
-  }
-  
   /**
    * Returns a previous locus within the same rule.
    * @param locus The starting locus.
@@ -63,6 +58,14 @@ public class Locus
     return (pos > 0)? new Locus( parent, rule, pos-1): null;
   }
   
+  
+  public Locus nextInGrammar()
+  {
+    Locus next = nextInRule();
+    if ( next != null && !next.isEnd()) return next;
+    return (parent != null)? parent.nextInGrammar(): null; 
+  }
+  
   /**
    * Returns a next locus within the same rule.
    * @param locus The starting locus.
@@ -70,9 +73,22 @@ public class Locus
    */
   public Locus nextInRule()
   {
-    while( pos < rule.size() && rule.get( pos).isEmpty())
-      pos++;
-    return (pos < rule.size())? new Locus( parent, rule, pos+1): null;
+    Locus next = (pos < rule.size())? new Locus( parent, rule, pos+1): null;
+    if ( next != null && next.isEmpty()) return next.nextInRule();
+    return next;
+  }
+  
+  public boolean hasCycle()
+  {
+    Set<Rule> set = new HashSet<Rule>();
+    Locus locus = this;
+    while( locus != null)
+    {
+      if ( !set.add( locus.getRule()))
+        return true;
+      locus = locus.getParent();
+    }
+    return false;
   }
   
   public Rule getRule()
